@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Archify Architecture Hub | 全景架构中枢</title>
+  <meta name="description" content="基于 Archify 构建的多维度高交互系统架构展示平台，汇集游戏联机系统与 AI 实时配音系统的全景架构图表。">
+  <style>
+    :root {
+      --bg: #090d16;
+      --bg-surface: #0f172a;
+      --bg-card: rgba(17, 24, 39, 0.75);
+      --bg-card-hover: rgba(30, 41, 59, 0.85);
+      --border: rgba(51, 65, 85, 0.6);
+      --border-highlight: rgba(99, 102, 241, 0.5);
+      --text: #94a3b8;
+      --text-bright: #f8fafc;
+      --text-muted: #64748b;
+      --accent: #6366f1;
+      --accent-cyan: #06b6d4;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --accent-purple: #a855f7;
+      --glow-pal: rgba(99, 102, 241, 0.15);
+      --glow-hoyo: rgba(6, 182, 212, 0.15);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 0;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Ambient background glow */
+    body::before {
+      content: "";
+      position: fixed;
+      top: -200px;
+      left: 20%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: "";
+      position: fixed;
+      bottom: -150px;
+      right: 15%;
+      width: 550px;
+      height: 550px;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.1) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrapper {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header Nav */
+    header.site-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 48px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-cyan));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 800;
+      font-size: 18px;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    }
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+    }
+    .brand-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-bright);
+      letter-spacing: -0.02em;
+    }
+    .brand-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .header-links {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .header-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.6);
+      transition: all 0.2s ease;
+    }
+    .header-link:hover {
+      color: var(--text-bright);
+      border-color: var(--text-muted);
+      background: rgba(30, 41, 59, 0.8);
+    }
+
+    /* Hero Section */
+    .hero {
+      text-align: center;
+      margin-bottom: 56px;
+      padding: 0 10px;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 999px;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #818cf8;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .hero-badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent-emerald);
+      box-shadow: 0 0 8px var(--accent-emerald);
+    }
+    .hero h1 {
+      font-size: clamp(28px, 5vw, 46px);
+      font-weight: 800;
+      color: var(--text-bright);
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+    .hero-gradient {
+      background: linear-gradient(135deg, #f8fafc 30%, #818cf8 70%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-desc {
+      font-size: clamp(14px, 2.5vw, 17px);
+      color: var(--text-muted);
+      max-width: 740px;
+      margin: 0 auto 28px;
+      line-height: 1.7;
+    }
+    .stats-row {
+      display: flex;
+      justify-content: center;
+      gap: clamp(12px, 3vw, 36px);
+      flex-wrap: wrap;
+    }
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 16px;
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid rgba(51, 65, 85, 0.4);
+      border-radius: 12px;
+      min-width: 100px;
+    }
+    .stat-num {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-bright);
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Section Title */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-bright);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-hint {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Project Cards Grid */
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr));
+      gap: 28px;
+      margin-bottom: 60px;
+    }
+
+    .project-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .project-card:hover {
+      border-color: var(--border-highlight);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+    }
+    .project-card.pal {
+      border-top: 3px solid var(--accent);
+    }
+    .project-card.pal:hover {
+      box-shadow: 0 16px 36px var(--glow-pal);
+    }
+    .project-card.hoyo {
+      border-top: 3px solid var(--accent-cyan);
+    }
+    .project-card.hoyo:hover {
+      box-shadow: 0 16px 36px var(--glow-hoyo);
+    }
+    .project-card.add-new {
+      border: 2px dashed rgba(51, 65, 85, 0.8);
+      background: rgba(15, 23, 42, 0.3);
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      min-height: 320px;
+    }
+    .project-card.add-new:hover {
+      border-color: #818cf8;
+      background: rgba(15, 23, 42, 0.6);
+    }
+
+    .card-top {
+      margin-bottom: 20px;
+    }
+    .card-badge-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .card-category {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    .card.pal .card-category {
+      background: rgba(99, 102, 241, 0.15);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+    .card.hoyo .card-category {
+      background: rgba(6, 182, 212, 0.15);
+      color: #67e8f9;
+      border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+    .card-status {
+      font-size: 12px;
+      color: var(--accent-emerald);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 500;
+    }
+
+    .card-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-bright);
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+    .card-desc {
+      font-size: 14px;
+      color: var(--text);
+      margin-bottom: 18px;
+      line-height: 1.65;
+    }
+
+    /* Tech Stack Tags */
+    .tech-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .tech-tag {
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(51, 65, 85, 0.5);
+      color: #cbd5e1;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    /* Diagram Manifest Pills */
+    .diagram-pills {
+      background: rgba(10, 15, 26, 0.6);
+      border: 1px solid rgba(51, 65, 85, 0.4);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 24px;
+    }
+    .diagram-pills-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .diagram-pill-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .diagram-pill {
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid rgba(71, 85, 105, 0.3);
+      color: #94a3b8;
+    }
+
+    /* Card Actions */
+    .card-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex: 1;
+      min-width: 140px;
+      min-height: 44px; /* Mobile touch ergonomics */
+    }
+    .btn:active {
+      transform: scale(0.98);
+    }
+    .btn-pal {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .btn-pal:hover {
+      background: linear-gradient(135deg, #4338ca, #4f46e5);
+      box-shadow: 0 6px 18px rgba(79, 70, 229, 0.5);
+    }
+    .btn-hoyo {
+      background: linear-gradient(135deg, #0891b2, #06b6d4);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(8, 145, 178, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .btn-hoyo:hover {
+      background: linear-gradient(135deg, #0e7490, #0891b2);
+      box-shadow: 0 6px 18px rgba(8, 145, 178, 0.5);
+    }
+    .btn-outline {
+      background: rgba(15, 23, 42, 0.7);
+      color: #cbd5e1;
+      border: 1px solid var(--border);
+      flex: 0 0 auto;
+      min-width: auto;
+    }
+    .btn-outline:hover {
+      background: rgba(30, 41, 59, 0.9);
+      color: #ffffff;
+      border-color: var(--text-muted);
+    }
+
+    /* Standardized Views Overview Section */
+    .standard-views-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      margin-bottom: 60px;
+    }
+    .views-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .view-badge-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(51, 65, 85, 0.4);
+      border-radius: 12px;
+      padding: 16px;
+      transition: all 0.2s ease;
+    }
+    .view-badge-card:hover {
+      border-color: var(--border-highlight);
+      transform: translateY(-2px);
+    }
+    .view-card-num {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .view-card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 6px;
+    }
+    .view-card-desc {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 0 16px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: auto;
+    }
+    footer a {
+      color: #818cf8;
+      text-decoration: none;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Mobile Responsive Media Queries */
+    @media (max-width: 640px) {
+      .wrapper {
+        padding: 20px 16px 40px;
+      }
+      header.site-header {
+        margin-bottom: 32px;
+      }
+      .hero {
+        margin-bottom: 36px;
+      }
+      .hero-desc {
+        font-size: 14px;
+      }
+      .project-card {
+        padding: 20px;
+      }
+      .card-actions {
+        flex-direction: column;
+      }
+      .btn {
+        width: 100%;
+      }
+      .stats-row {
+        gap: 10px;
+      }
+      .stat-item {
+        min-width: 80px;
+        padding: 8px 12px;
+      }
+      .stat-num {
+        font-size: 18px;
+      }
+      .stat-label {
+        font-size: 11px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <!-- Header -->
+    <header class="site-header">
+      <a class="brand" href="./">
+        <div class="brand-logo">A</div>
+        <div class="brand-text">
+          <span class="brand-title">Archify Architecture Hub</span>
+          <span class="brand-subtitle">系统全景架构展示中枢</span>
+        </div>
+      </a>
+      <div class="header-links">
+        <a class="header-link" href="https://github.com/chlchi/project_archify" target="_blank" rel="noopener">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          GitHub 源码
+        </a>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        Google DeepMind Antigravity × Archify v2.16
+      </div>
+      <h1>
+        多维度交互式<span class="hero-gradient">系统架构展示矩阵</span>
+      </h1>
+      <p class="hero-desc">
+        统一汇集并呈现基于 Archify 引擎生成的 Showcase 级多维技术架构。涵盖游戏多人高频状态同步网络与 AI 实时语音处理流水线，全端适配移动端与桌面端交互。
+      </p>
+
+      <div class="stats-row">
+        <div class="stat-item">
+          <span class="stat-num">2</span>
+          <span class="stat-label">工程项目</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num">10</span>
+          <span class="stat-label">交互视图</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num">100%</span>
+          <span class="stat-label">Showcase 质检</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num">Mobile</span>
+          <span class="stat-label">全端自适应</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Project Gallery -->
+    <div class="section-header">
+      <div class="section-title">
+        <span>📦</span> 项目架构导航
+      </div>
+      <div class="section-hint">点击卡片进入专属架构中枢与交互沙盒</div>
+    </div>
+
+    <div class="projects-grid">
+      <!-- Project 1: PAL -->
+      <div class="project-card pal">
+        <div class="card-top">
+          <div class="card-badge-row">
+            <span class="card-category">3D 动作冒险 · 联机系统</span>
+            <span class="card-status">● 5 大架构图已就绪</span>
+          </div>
+          <h2 class="card-title">PAL 幻兽联机系统</h2>
+          <p class="card-desc">
+            基于 Unity 3D 客户端与 .NET 8 独立服务端构建。深度解析物理抛物线精灵球瞄准投掷、野生怪物收服出战、20Hz 阈值差异位姿中继以及服务端权威防作弊裁决机制。
+          </p>
+
+          <div class="tech-tags">
+            <span class="tech-tag">Unity 3D</span>
+            <span class="tech-tag">C# / .NET 8</span>
+            <span class="tech-tag">TCP Socket</span>
+            <span class="tech-tag">PhysX</span>
+            <span class="tech-tag">NavMesh AI</span>
+            <span class="tech-tag">权威去重裁决</span>
+          </div>
+
+          <div class="diagram-pills">
+            <div class="diagram-pills-title">包含的 5 大维度视图</div>
+            <div class="diagram-pill-list">
+              <span class="diagram-pill">01 系统架构</span>
+              <span class="diagram-pill">02 捕获与战斗流程</span>
+              <span class="diagram-pill">03 网络交互时序</span>
+              <span class="diagram-pill">04 状态同步数据流</span>
+              <span class="diagram-pill">05 实体生命周期</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <a class="btn btn-pal" href="./pal_archify/">
+            进入项目架构中枢 →
+          </a>
+          <a class="btn btn-outline" href="https://github.com/chlchi/project_archify/blob/main/pal_archify/README.md" target="_blank" rel="noopener">
+            技术文档
+          </a>
+        </div>
+      </div>
+
+      <!-- Project 2: HoYo Quest Voice -->
+      <div class="project-card hoyo">
+        <div class="card-top">
+          <div class="card-badge-row">
+            <span class="card-category">AI 实时流式语音 · 逆向工程</span>
+            <span class="card-status">● 5 大架构图已就绪</span>
+          </div>
+          <h2 class="card-title">HoYo Quest Voice 支线 AI 配音</h2>
+          <p class="card-desc">
+            面向崩铁等游戏的无侵入式 AI 实时剧情配音系统。深度解析 Win32 DPI-aware 高清帧捕获、8×32 极轻量灰度指纹门控（节省 80%+ 算力）、六级说话人路由决策与 GPT-SoVITS 异步流式合成。
+          </p>
+
+          <div class="tech-tags">
+            <span class="tech-tag">Python 3.10</span>
+            <span class="tech-tag">Win32 API</span>
+            <span class="tech-tag">RapidOCR</span>
+            <span class="tech-tag">GPT-SoVITS</span>
+            <span class="tech-tag">FastAPI</span>
+            <span class="tech-tag">指纹门控优化</span>
+          </div>
+
+          <div class="diagram-pills">
+            <div class="diagram-pills-title">包含的 5 大维度视图</div>
+            <div class="diagram-pill-list">
+              <span class="diagram-pill">01 系统架构</span>
+              <span class="diagram-pill">02 业务处理工作流</span>
+              <span class="diagram-pill">03 核心调用时序</span>
+              <span class="diagram-pill">04 画面音频数据流</span>
+              <span class="diagram-pill">05 帧差状态生命周期</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <a class="btn btn-hoyo" href="./hoyo_web_archify/">
+            进入项目架构中枢 →
+          </a>
+          <a class="btn btn-outline" href="https://github.com/chlchi/project_archify/blob/main/hoyo_web_archify/README.md" target="_blank" rel="noopener">
+            技术文档
+          </a>
+        </div>
+      </div>
+
+      <!-- Project 3: Extensibility Placeholder for Future Projects -->
+      <div class="project-card add-new">
+        <div style="font-size: 36px; margin-bottom: 12px; color: #64748b;">⚡</div>
+        <h3 style="font-size: 18px; color: var(--text-bright); margin-bottom: 8px;">接入更多 Archify 项目</h3>
+        <p style="font-size: 13px; color: var(--text-muted); max-width: 320px; margin-bottom: 16px;">
+          本平台已实现标准化模块解耦，只需将新项目的 Archify 产物放入对应子目录，即可无缝扩展。
+        </p>
+        <span style="font-size: 12px; color: #818cf8; background: rgba(99, 102, 241, 0.1); padding: 4px 12px; border-radius: 999px; border: 1px solid rgba(99, 102, 241, 0.3);">
+          支持任意 Archify Showcase 产物
+        </span>
+      </div>
+    </div>
+
+    <!-- 5 Standard Views Specification Section -->
+    <div class="standard-views-section">
+      <div class="section-title" style="font-size: 18px;">
+        <span>📐</span> Archify 五大统一架构标准规范
+      </div>
+      <p style="font-size: 13px; color: var(--text-muted); margin-top: 6px;">
+        所有项目均严格遵循 Archify Schema v2 规范，通过 9 项严格类型与布局检查，实现统一的视觉语言与交互体验。
+      </p>
+
+      <div class="views-grid">
+        <div class="view-badge-card">
+          <div class="view-card-num">01 · ARCHITECTURE</div>
+          <div class="view-card-title">系统总体架构</div>
+          <div class="view-card-desc">梳理物理与信任域边界、容器分层、协议接口与网络拓扑。</div>
+        </div>
+        <div class="view-badge-card">
+          <div class="view-card-num">02 · WORKFLOW</div>
+          <div class="view-card-title">业务泳道工作流</div>
+          <div class="view-card-desc">泳道模型呈现业务全链路，包含分支判定、异常熔断与短路保护。</div>
+        </div>
+        <div class="view-badge-card">
+          <div class="view-card-num">03 · SEQUENCE</div>
+          <div class="view-card-title">核心调用时序</div>
+          <div class="view-card-desc">跨参与者的高频网络消息、异步回调与原子状态流转时序。</div>
+        </div>
+        <div class="view-badge-card">
+          <div class="view-card-num">04 · DATAFLOW</div>
+          <div class="view-card-title">流式数据管道</div>
+          <div class="view-card-desc">5 阶段数据形态渐进演变：采样、定率过滤、状态裁决到多端渲染。</div>
+        </div>
+        <div class="view-badge-card">
+          <div class="view-card-num">05 · LIFECYCLE</div>
+          <div class="view-card-title">状态机与生命周期</div>
+          <div class="view-card-desc">主轨道 5 阶段流转、异常分支恢复与资源终态收敛回收。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <p>
+        Archify Showcase Hub · 托管于 <a href="https://github.com/chlchi/project_archify" target="_blank" rel="noopener">GitHub Pages</a> · 
+        基于 <a href="https://github.com/tt-a1i/archify" target="_blank" rel="noopener">Archify</a> 规范渲染
+      </p>
+    </footer>
+  </div>
+</body>
+</html>

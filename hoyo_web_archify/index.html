@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>PAL 幻兽联机系统全景架构中枢 (Archify)</title>
-  <meta name="description" content="PAL 幻兽联机系统全景架构展示，基于 Unity 3D、.NET 8 与 Archify 渲染引擎构建。">
+  <title>HoYo Quest Voice 架构中枢 (Archify)</title>
+  <meta name="description" content="HoYo Quest Voice 崩铁支线 AI 实时配音系统架构全景展示，基于 Archify 引擎构建。">
   <style>
     :root {
       --bg: #090d16;
       --card-bg: rgba(17, 24, 39, 0.75);
       --border: rgba(51, 65, 85, 0.6);
-      --border-highlight: rgba(99, 102, 241, 0.5);
+      --border-highlight: rgba(6, 182, 212, 0.5);
       --text: #94a3b8;
       --text-bright: #f8fafc;
       --text-muted: #64748b;
-      --accent: #6366f1;
+      --accent: #06b6d4;
       --accent-purple: #a855f7;
       --accent-green: #10b981;
       --accent-orange: #f59e0b;
@@ -41,10 +41,10 @@
       content: "";
       position: fixed;
       top: -150px;
-      left: 10%;
+      right: 10%;
       width: 500px;
       height: 500px;
-      background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, transparent 70%);
       pointer-events: none;
       z-index: 0;
     }
@@ -77,18 +77,18 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      color: #818cf8;
+      color: #38bdf8;
       font-size: 13px;
       font-weight: 600;
       text-decoration: none;
       padding: 6px 12px;
       border-radius: 8px;
-      background: rgba(99, 102, 241, 0.1);
-      border: 1px solid rgba(99, 102, 241, 0.25);
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.25);
       transition: all 0.2s;
     }
     .back-btn:hover {
-      background: rgba(99, 102, 241, 0.2);
+      background: rgba(6, 182, 212, 0.2);
       transform: translateX(-2px);
     }
     .nav-meta {
@@ -131,10 +131,10 @@
       font-size: 12px;
       font-weight: 600;
       border-radius: 20px;
-      background: rgba(99, 102, 241, 0.15);
-      color: #a5b4fc;
+      background: rgba(6, 182, 212, 0.15);
+      color: #67e8f9;
       margin-bottom: 12px;
-      border: 1px solid rgba(99, 102, 241, 0.3);
+      border: 1px solid rgba(6, 182, 212, 0.3);
     }
     h1 {
       font-size: clamp(24px, 4vw, 32px);
@@ -184,7 +184,7 @@
       top: 0; left: 0; right: 0;
       height: 3px;
     }
-    .card.arch::before { background: linear-gradient(90deg, #6366f1, #3b82f6); }
+    .card.arch::before { background: linear-gradient(90deg, #06b6d4, #0284c7); }
     .card.workflow::before { background: linear-gradient(90deg, #10b981, #059669); }
     .card.sequence::before { background: linear-gradient(90deg, #a855f7, #7c3aed); }
     .card.dataflow::before { background: linear-gradient(90deg, #f59e0b, #d97706); }
@@ -258,12 +258,12 @@
       transform: scale(0.98);
     }
     .btn-primary {
-      background: #4f46e5;
+      background: #0891b2;
       color: #ffffff;
       border: 1px solid rgba(255, 255, 255, 0.15);
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+      box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
     }
-    .btn-primary:hover { background: #4338ca; }
+    .btn-primary:hover { background: #06b6d4; }
     .btn-secondary {
       background: #1e293b;
       color: #cbd5e1;
@@ -340,7 +340,7 @@
     }
     .tab-btn.active {
       background: var(--accent);
-      color: #ffffff;
+      color: #042f2e;
       font-weight: 600;
       border-color: var(--accent);
     }
@@ -422,7 +422,7 @@
       color: var(--text-muted);
       margin-top: 40px;
     }
-    footer a { color: #818cf8; text-decoration: none; }
+    footer a { color: #38bdf8; text-decoration: none; }
     footer a:hover { text-decoration: underline; }
 
     /* Mobile media queries */
@@ -445,17 +445,16 @@
         <span class="nav-meta">Archify Showcase Collection</span>
       </div>
       <div class="nav-links">
-        <a class="nav-link-btn" href="../hoyo_web_archify/">切换至 HoYo 语音系统 →</a>
-        <a class="nav-link-btn" href="https://github.com/chlchi/project_archify/blob/main/pal_archify/README.md" target="_blank" rel="noopener">README 文档</a>
+        <a class="nav-link-btn" href="../pal_archify/">切换至 PAL 幻兽系统 →</a>
+        <a class="nav-link-btn" href="https://github.com/chlchi/project_archify/blob/main/hoyo_web_archify/README.md" target="_blank" rel="noopener">README 文档</a>
       </div>
     </div>
 
     <header>
       <div class="badge">Google DeepMind Antigravity × Archify v2.16</div>
-      <h1>PAL 幻兽联机系统全景架构中枢</h1>
+      <h1>HoYo Quest Voice 架构全景中枢</h1>
       <p class="desc">
-        本项目包含 Unity 3D 客户端与基于 .NET 8 构建的独立游戏服务端 (PalGameServer)。
-        已通过 <strong>Archify</strong> 渲染引擎生成 5 大架构视图体系，所有图表均支持<strong>深浅色切换、节点搜索、路径高亮、动态追踪 (Trace Animation)、章节视角切换与 SVG/PNG/Share Card 导出</strong>。
+        面向崩铁等游戏支线剧情的非侵入式 AI 实时配音系统。集成 Win32 DPI-aware 高清帧截取、8×32 灰度指纹门控（节省 80%+ 算力）、RapidOCR 文本识别、六级说话人路由与 GPT-SoVITS 异步流式语音合成。所有图表均支持<strong>节点检索、路径高亮、动态追踪、章节视角切换与高清导出</strong>。
       </p>
     </header>
 
@@ -464,17 +463,17 @@
       <div class="card arch">
         <div>
           <div class="card-type">01 · Architecture</div>
-          <h2 class="card-title">系统总体架构图</h2>
-          <p class="card-desc">展示客户端各子系统（输入物理、精灵球捕获、NavMesh AI、NetworkManager、OtherPlayerManager）与服务端（TcpListener、路由分发、权威战斗防作弊、会话仓储）的整体模块边界与网络拓扑。</p>
+          <h2 class="card-title">系统总体分层架构图</h2>
+          <p class="card-desc">展示游戏客户区 (HWND)、Win32 DPI 捕获、8×32 灰度指纹门控、RapidOCR 引擎、六级说话人路由、GPT-SoVITS 权重热切与 FastAPI 控制台的整体模块拓扑与信任域边界。</p>
           <ul class="card-features">
-            <li>包含 Client Host 与 Server Host 双信任域边界</li>
-            <li>标注 20Hz 增量位姿同步与权威击中判定</li>
-            <li>内置 4 套视角：玩法、网络管道、防作弊与镜像同步</li>
+            <li>包含 Windows 游戏客户区与 Python 核心调度双信任边界</li>
+            <li>标注 Win32 API 原生无侵入抓取与 DPI 缩放解耦</li>
+            <li>内置 3 套架构视角：核心流、门控流水线与容错自愈</li>
           </ul>
         </div>
         <div class="card-footer">
-          <a class="btn btn-primary" href="pal_system.architecture.html" target="_blank">打开独立交互图 ↗</a>
-          <button class="btn btn-secondary" onclick="loadPreview('pal_system.architecture.html')">在下方预览</button>
+          <a class="btn btn-primary" href="system-architecture.architecture.html" target="_blank">打开独立交互图 ↗</a>
+          <button class="btn btn-secondary" onclick="loadPreview('system-architecture.architecture.html')">在下方预览</button>
         </div>
       </div>
 
@@ -482,17 +481,17 @@
       <div class="card workflow">
         <div>
           <div class="card-type">02 · Workflow</div>
-          <h2 class="card-title">捕获与战斗业务流程图</h2>
-          <p class="card-desc">基于 Schema v2 泳道模型呈现：右键射线瞄准 → 抛物线投掷精灵球 → 碰撞野生怪 → 3次摇摆概率判定 → 伴宠收服入队 → R键召唤协同作战 → 联机子弹命中 → 服务端 1 秒防刷校验与全服广播。</p>
+          <h2 class="card-title">端到端业务泳道工作流</h2>
+          <p class="card-desc">基于 Schema v2 泳道模型呈现：游戏画面采集 → 打字机打字态等待 (CHANGING) → 文字稳定后触发 (STABLE_NEW) → 非对话场景短路 (UNSUPPORTED) → 别名纠错匹配与语音生成。</p>
           <ul class="card-features">
-            <li>清晰划分玩家控制、幻兽AI、网络层与服务端泳道</li>
-            <li>三阶段：瞄准投掷、捕获召唤、联机战斗结算</li>
-            <li>涵盖正向收服链路与战斗伤害防作弊验证</li>
+            <li>明确划分抓取层、帧差门控层、OCR/路由层与 TTS 播放层</li>
+            <li>三阶段设计：画面捕获、指纹比对门控、多级决策合成</li>
+            <li>涵盖打字态去重、非对白场景短路与声音缓存复用</li>
           </ul>
         </div>
         <div class="card-footer">
-          <a class="btn btn-primary" href="pal_gameplay.workflow.html" target="_blank">打开独立交互图 ↗</a>
-          <button class="btn btn-secondary" onclick="loadPreview('pal_gameplay.workflow.html')">在下方预览</button>
+          <a class="btn btn-primary" href="dialogue-voice.workflow.html" target="_blank">打开独立交互图 ↗</a>
+          <button class="btn btn-secondary" onclick="loadPreview('dialogue-voice.workflow.html')">在下方预览</button>
         </div>
       </div>
 
@@ -500,17 +499,17 @@
       <div class="card sequence">
         <div>
           <div class="card-type">03 · Sequence</div>
-          <h2 class="card-title">网络交互时序图</h2>
-          <p class="card-desc">呈现玩家 A、本地 NetworkManager、PalGameServer、权威防作弊器、远端 NetworkManager 与玩家 B 之间的全链路消息时序。</p>
+          <h2 class="card-title">主循环 Tick 级交互时序图</h2>
+          <p class="card-desc">呈现主轮询 Tick (15 Hz) 驱动捕获、指纹相似度计算门控、RapidOCR 区域文本推理、SpeakerRouter 六级决策、GPT-SoVITS /tts 权重切换与音频异步播报时序。</p>
           <ul class="card-features">
-            <li>覆盖连接握手 (WELCOME)、新玩家发现 (PLAYER_JOIN)</li>
-            <li>20Hz 阈值位姿中继与远端 SmoothMove 插值时序</li>
-            <li>PLAYER_HIT 上报、服务端去重防刷与原子广播结算</li>
+            <li>覆盖 15Hz 主轮询 Tick 驱动与帧差短路时序</li>
+            <li>RapidOCR 区域文本提取与六级说话人路由决策时序</li>
+            <li>GPT-SoVITS 权重热切换与 Winsound 异步播放结算</li>
           </ul>
         </div>
         <div class="card-footer">
-          <a class="btn btn-primary" href="pal_network.sequence.html" target="_blank">打开独立交互图 ↗</a>
-          <button class="btn btn-secondary" onclick="loadPreview('pal_network.sequence.html')">在下方预览</button>
+          <a class="btn btn-primary" href="request-playback.sequence.html" target="_blank">打开独立交互图 ↗</a>
+          <button class="btn btn-secondary" onclick="loadPreview('request-playback.sequence.html')">在下方预览</button>
         </div>
       </div>
 
@@ -518,17 +517,17 @@
       <div class="card dataflow">
         <div>
           <div class="card-type">04 · Dataflow</div>
-          <h2 class="card-title">状态同步与网络数据流图</h2>
-          <p class="card-desc">5 阶段流式数据通道：输入物理采样 → 差异过滤与 20Hz 定率 → 管道协议编码 → 服务端权威状态裁决 → 远端镜像平滑插值呈现。</p>
+          <h2 class="card-title">画面到音频数据流向图</h2>
+          <p class="card-desc">5 阶段流式数据管道：HWND 显存缓冲区 → uint8 RGB 帧 → 降维 8×32 灰度特征与 ROI 裁切 → TextEvent 结构化文本与规范角色 ID → PCM/WAV 字节流与扬声器播放。</p>
           <ul class="card-features">
-            <li>双管道流：位姿移动同步流 + 战斗伤害结算流</li>
-            <li>50ms 采样周期与 0.1m/5° 空间死区防网络风暴</li>
-            <li>服务端 (攻击者_目标_位置) 复合键 1.0s 防连击外挂</li>
+            <li>从显存位图到 PCM 模拟音频的全形态递进映射</li>
+            <li>8×32 灰度矩阵实现 1ms 级别超轻量指纹提取</li>
+            <li>结构化 TextEvent 与遥测事件流多向解耦发布</li>
           </ul>
         </div>
         <div class="card-footer">
-          <a class="btn btn-primary" href="pal_sync.dataflow.html" target="_blank">打开独立交互图 ↗</a>
-          <button class="btn btn-secondary" onclick="loadPreview('pal_sync.dataflow.html')">在下方预览</button>
+          <a class="btn btn-primary" href="frame-audio.dataflow.html" target="_blank">打开独立交互图 ↗</a>
+          <button class="btn btn-secondary" onclick="loadPreview('frame-audio.dataflow.html')">在下方预览</button>
         </div>
       </div>
 
@@ -536,17 +535,17 @@
       <div class="card lifecycle">
         <div>
           <div class="card-type">05 · Lifecycle</div>
-          <h2 class="card-title">玩家与幻兽生命周期状态机</h2>
-          <p class="card-desc">严格遵循 Archify 状态机轨道布局：联机漫游主轨道（离线 → 握手 → 漫游 → 战斗 → 存活），受击与退出分支，以及伴宠收服与生命终态收敛。</p>
+          <h2 class="card-title">帧差与任务状态生命周期</h2>
+          <p class="card-desc">严格遵循 Archify 状态机轨道布局：主轨道（BOOTSTRAP → CHANGING → STABLE_NEW → SYNTHESIZING → PLAYING_DONE）与等待分支（UNCHANGED 免计算、CACHED_HIT 缓存复用）。</p>
           <ul class="card-features">
-            <li>主轨展现正常游戏会话的标准 5 阶段流转</li>
-            <li>受击状态经由防作弊校验，血量归零触发死亡终态</li>
-            <li>精灵球 3 次摇摆判定收敛为收服入队与伴宠出战</li>
+            <li>主轨清晰展现正常对白处理的 5 阶段演进流转</li>
+            <li>UNCHANGED 状态直接短路，降低 80%+ 冗余开销</li>
+            <li>TTS 失败自愈重试与对白跳过 (SCENE_DROP) 终态收敛</li>
           </ul>
         </div>
         <div class="card-footer">
-          <a class="btn btn-primary" href="pal_lifecycle.lifecycle.html" target="_blank">打开独立交互图 ↗</a>
-          <button class="btn btn-secondary" onclick="loadPreview('pal_lifecycle.lifecycle.html')">在下方预览</button>
+          <a class="btn btn-primary" href="dialogue-state.lifecycle.html" target="_blank">打开独立交互图 ↗</a>
+          <button class="btn btn-secondary" onclick="loadPreview('dialogue-state.lifecycle.html')">在下方预览</button>
         </div>
       </div>
     </div>
@@ -560,11 +559,11 @@
         </div>
         <div class="preview-controls">
           <div class="preview-tabs">
-            <button class="tab-btn active" onclick="switchTab(this, 'pal_system.architecture.html')">01 系统架构</button>
-            <button class="tab-btn" onclick="switchTab(this, 'pal_gameplay.workflow.html')">02 业务流程</button>
-            <button class="tab-btn" onclick="switchTab(this, 'pal_network.sequence.html')">03 网络时序</button>
-            <button class="tab-btn" onclick="switchTab(this, 'pal_sync.dataflow.html')">04 数据流</button>
-            <button class="tab-btn" onclick="switchTab(this, 'pal_lifecycle.lifecycle.html')">05 生命周期</button>
+            <button class="tab-btn active" onclick="switchTab(this, 'system-architecture.architecture.html')">01 系统架构</button>
+            <button class="tab-btn" onclick="switchTab(this, 'dialogue-voice.workflow.html')">02 业务流程</button>
+            <button class="tab-btn" onclick="switchTab(this, 'request-playback.sequence.html')">03 调用时序</button>
+            <button class="tab-btn" onclick="switchTab(this, 'frame-audio.dataflow.html')">04 数据流向</button>
+            <button class="tab-btn" onclick="switchTab(this, 'dialogue-state.lifecycle.html')">05 状态生命周期</button>
           </div>
           <button class="fullscreen-btn" onclick="openFullscreenModal()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
@@ -572,13 +571,13 @@
           </button>
         </div>
       </div>
-      <iframe id="preview-frame" class="preview-frame" src="pal_system.architecture.html"></iframe>
+      <iframe id="preview-frame" class="preview-frame" src="system-architecture.architecture.html"></iframe>
     </div>
 
     <!-- Fullscreen Modal for mobile/touch -->
     <div id="modal-overlay" class="modal-overlay">
       <div class="modal-header">
-        <span id="modal-title" class="modal-title">PAL 幻兽联机系统架构视图</span>
+        <span id="modal-title" class="modal-title">HoYo Quest Voice 架构视图</span>
         <button class="modal-close-btn" onclick="closeFullscreenModal()">✕ 退出全屏</button>
       </div>
       <iframe id="modal-frame" class="modal-frame" src=""></iframe>
@@ -586,7 +585,7 @@
 
     <footer>
       <p>
-        PAL Multiplayer Architecture Portal · 
+        HoYo Quest Voice Architecture Portal · 
         <a href="../">返回展示主中枢</a> · 
         <a href="https://github.com/chlchi/project_archify" target="_blank" rel="noopener">GitHub 仓库</a>
       </p>
@@ -594,7 +593,7 @@
   </div>
 
   <script>
-    let currentUrl = 'pal_system.architecture.html';
+    let currentUrl = 'system-architecture.architecture.html';
 
     function loadPreview(url) {
       currentUrl = url;
