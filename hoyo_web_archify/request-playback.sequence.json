@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "HoYo Quest Voice 对话识别与播报调用时序",
+    "locale": "zh-CN",
+    "output": "request-playback.sequence.html",
+    "viewBox": [960, 800],
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "capture-and-gating",
+        "label": "捕获与帧差决策",
+        "focus": ["game", "runtime", "gate"],
+        "note": "主循环每 tick 抓取原生图像帧并通过指纹门控比对，仅在文字稳定时进入后续流程。"
+      },
+      {
+        "id": "ocr-and-routing",
+        "label": "OCR 提取与声线路由",
+        "focus": ["runtime", "ocr", "router"],
+        "note": "RapidOCR 执行对话正文与说话人提取，SpeakerRouter 运行六级优先级判定绑定对应模型。"
+      },
+      {
+        "id": "synthesis-and-broadcast",
+        "label": "语音合成与事件广播",
+        "focus": ["runtime", "tts", "audio", "events"],
+        "note": "请求 GPT-SoVITS 服务生成 WAV 音频，通过 Winsound 异步播放并将生命周期同步至 Web 控制台。"
+      }
+    ]
+  },
+  "participants": [
+    { "id": "game", "type": "external", "label": "游戏窗口", "sublabel": "HSR 2K 客户区" },
+    { "id": "runtime", "type": "backend", "label": "调度核心", "sublabel": "HeadlessRuntime" },
+    { "id": "gate", "type": "security", "label": "指纹门控", "sublabel": "FrameChangeGate" },
+    { "id": "ocr", "type": "backend", "label": "OCR 引擎", "sublabel": "RapidOcrProvider" },
+    { "id": "router", "type": "backend", "label": "说话人路由", "sublabel": "SpeakerRouter" },
+    { "id": "tts", "type": "cloud", "label": "TTS 引擎", "sublabel": "GPT-SoVITS :9880" },
+    { "id": "audio", "type": "external", "label": "播放适配器", "sublabel": "Winsound" },
+    { "id": "events", "type": "messagebus", "label": "事件中心", "sublabel": "EventPublisher" }
+  ],
+  "segments": [
+    { "from": 140, "to": 290, "label": "阶段一：截屏采集与帧差门控比对" },
+    { "from": 310, "to": 460, "label": "阶段二：区域文字识别与声线模型路由" },
+    { "from": 480, "to": 720, "label": "阶段三：模型切权合成、音频播放与状态上报" }
+  ],
+  "messages": [
+    { "id": "msg-capture-req", "from": "runtime", "to": "game", "y": 170, "label": "PrintWindow 截屏", "variant": "default" },
+    { "id": "msg-capture-res", "from": "game", "to": "runtime", "y": 205, "label": "返回 ndarray 帧", "variant": "return" },
+    { "id": "msg-gate-req", "from": "runtime", "to": "gate", "y": 240, "label": "比对 8x32 指纹", "variant": "security" },
+    { "id": "msg-gate-res", "from": "gate", "to": "runtime", "y": 275, "label": "STABLE_NEW 判定", "variant": "return" },
+    { "id": "msg-ocr-req", "from": "runtime", "to": "ocr", "y": 330, "label": "裁切区域 OCR", "variant": "emphasis" },
+    { "id": "msg-ocr-res", "from": "ocr", "to": "runtime", "y": 365, "label": "TextEvent 正文+说话人", "variant": "return" },
+    { "id": "msg-route-req", "from": "runtime", "to": "router", "y": 400, "label": "六级优先级匹配", "variant": "default" },
+    { "id": "msg-route-res", "from": "router", "to": "runtime", "y": 435, "label": "返回 canonical_id + 模型", "variant": "return" },
+    { "id": "msg-tts-weights", "from": "runtime", "to": "tts", "y": 505, "label": "POST /set_weights (按需切权)", "variant": "default" },
+    { "id": "msg-tts-req", "from": "runtime", "to": "tts", "y": 545, "label": "POST /tts (text, prompt)", "variant": "emphasis" },
+    { "id": "msg-tts-res", "from": "tts", "to": "runtime", "y": 585, "label": "200 OK (WAV 字节流)", "variant": "return" },
+    { "id": "msg-play-req", "from": "runtime", "to": "audio", "y": 625, "label": "play(PlaybackRequest)", "variant": "emphasis" },
+    { "id": "msg-event-start", "from": "runtime", "to": "events", "y": 660, "label": "publish(DIALOGUE_STARTED)", "variant": "dashed" },
+    { "id": "msg-event-done", "from": "audio", "to": "events", "y": 695, "label": "publish(DIALOGUE_COMPLETED)", "variant": "dashed" }
+  ],
+  "activations": [
+    { "participant": "runtime", "from": 160, "to": 670, "type": "backend" },
+    { "participant": "game", "from": 168, "to": 210, "type": "external" },
+    { "participant": "gate", "from": 235, "to": 280, "type": "security" },
+    { "participant": "ocr", "from": 325, "to": 370, "type": "backend" },
+    { "participant": "router", "from": 395, "to": 440, "type": "backend" },
+    { "participant": "tts", "from": 500, "to": 590, "type": "cloud" },
+    { "participant": "audio", "from": 620, "to": 700, "type": "external" },
+    { "participant": "events", "from": 655, "to": 705, "type": "messagebus" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "帧差检测时序",
+      "items": [
+        "HeadlessRuntime 在主轮询 tick 中以 15 Hz 频率进行轻量帧捕获",
+        "指纹门控耗时仅约 1ms，在文字处于打字机渐变态时直接返回 CHANGING",
+        "仅在检测到 STABLE_NEW 判定后才唤起耗时更重的 OCR 深度推理"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "路由与权重热切",
+      "items": [
+        "SpeakerRouter 极速返回规范化说话人与其预设权重文件路径",
+        "VoiceSwitchingGptSovitsTts 比对前一次模型名称，同角色免重载权重",
+        "POST /tts 仅需 ~0.5s 至 1s 即可完成短句至标准短句的端到端解码"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "异步播报与解耦",
+      "items": [
+        "Winsound 采用 SND_ASYNC 标志位播放，绝不阻塞下一次 tick 轮询",
+        "事件中心支持发布 DIALOGUE_STARTED / COMPLETED / FAILED 等多种事件",
+        "Web 控制台通过 WebSocket 实时订阅，保证前端 UI 状态始终同频"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "PAL 多人状态同步与网络数据流图",
+    "locale": "zh-CN",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1080,
+      720
+    ],
+    "views": [
+      {
+        "id": "motion-pipeline",
+        "label": "位姿移动同步流",
+        "focus": [
+          "input_motion",
+          "rate_limiter",
+          "motion_packet",
+          "server_router",
+          "remote_smooth"
+        ],
+        "note": "从 WASD 本地物理采样到 20Hz 增量过滤、TCP 中继与远端平滑插值。"
+      },
+      {
+        "id": "combat-pipeline",
+        "label": "战斗伤害结算流",
+        "focus": [
+          "input_combat",
+          "hit_packager",
+          "combat_packet",
+          "anticheat_state",
+          "ui_render"
+        ],
+        "note": "碰撞触发击中封包，服务端 1 秒去重防刷与原子广播更新血条。"
+      }
+    ]
+  },
+  "stages": [
+    {
+      "label": "输入物理采样"
+    },
+    {
+      "label": "差异过滤定率"
+    },
+    {
+      "label": "协议传输通道"
+    },
+    {
+      "label": "服务端状态裁决"
+    },
+    {
+      "label": "远端镜像呈现"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "input_motion",
+      "type": "frontend",
+      "label": "位姿物理采样",
+      "sublabel": "Update & FixedUpdate",
+      "stage": 0,
+      "row": 0,
+      "tag": "键盘/物理驱动"
+    },
+    {
+      "id": "input_combat",
+      "type": "frontend",
+      "label": "子弹受击碰撞",
+      "sublabel": "Bullet OnCollision",
+      "stage": 0,
+      "row": 2,
+      "tag": "瞬时物理碰撞"
+    },
+    {
+      "id": "rate_limiter",
+      "type": "backend",
+      "label": "20Hz 定率过滤",
+      "sublabel": "Dist>0.1m / Ang>5°",
+      "stage": 1,
+      "row": 0,
+      "tag": "50ms采样/死区"
+    },
+    {
+      "id": "hit_packager",
+      "type": "security",
+      "label": "击中事件封包",
+      "sublabel": "攻击者/目标/坐标",
+      "stage": 1,
+      "row": 2,
+      "tag": "瞬时可靠封装"
+    },
+    {
+      "id": "motion_packet",
+      "type": "messagebus",
+      "label": "位移数据流包",
+      "sublabel": "PLAYER_UPDATE|...",
+      "stage": 2,
+      "row": 0,
+      "tag": "UTF-8 管道行"
+    },
+    {
+      "id": "combat_packet",
+      "type": "messagebus",
+      "label": "战斗数据流包",
+      "sublabel": "PLAYER_HIT|...",
+      "stage": 2,
+      "row": 2,
+      "tag": "关键事件流"
+    },
+    {
+      "id": "server_router",
+      "type": "backend",
+      "label": "位姿广播中继",
+      "sublabel": "BroadcastToOthers",
+      "stage": 3,
+      "row": 0,
+      "tag": "转发其他玩家"
+    },
+    {
+      "id": "anticheat_state",
+      "type": "database",
+      "label": "权威血量裁决",
+      "sublabel": "LastHitTimes < 1.0s",
+      "stage": 3,
+      "row": 2,
+      "tag": "1s去重/扣血"
+    },
+    {
+      "id": "remote_smooth",
+      "type": "frontend",
+      "label": "远端平滑插值",
+      "sublabel": "SmoothMove & Slerp",
+      "stage": 4,
+      "row": 0,
+      "tag": "消除位姿抖动"
+    },
+    {
+      "id": "ui_render",
+      "type": "frontend",
+      "label": "头顶血条与受击",
+      "sublabel": "Billboard & UI",
+      "stage": 4,
+      "row": 2,
+      "tag": "血条/浮字/音效"
+    }
+  ],
+  "flows": [
+    {
+      "from": "input_motion",
+      "to": "rate_limiter",
+      "label": "物理位姿",
+      "classification": "连续输入",
+      "variant": "default",
+      "route": "straight"
+    },
+    {
+      "from": "rate_limiter",
+      "to": "motion_packet",
+      "label": "阈值增量",
+      "classification": "按需打包",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "from": "motion_packet",
+      "to": "server_router",
+      "label": "TCP:8888",
+      "classification": "网络传输",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "from": "server_router",
+      "to": "remote_smooth",
+      "label": "广播转发",
+      "classification": "镜像同步",
+      "variant": "emphasis",
+      "route": "straight"
+    },
+    {
+      "from": "input_combat",
+      "to": "hit_packager",
+      "label": "碰撞通知",
+      "classification": "瞬时事件",
+      "variant": "security",
+      "route": "straight"
+    },
+    {
+      "from": "hit_packager",
+      "to": "combat_packet",
+      "label": "打包事件",
+      "classification": "协议封装",
+      "variant": "security",
+      "route": "straight"
+    },
+    {
+      "from": "combat_packet",
+      "to": "anticheat_state",
+      "label": "TCP:8888",
+      "classification": "可靠投递",
+      "variant": "security",
+      "route": "straight"
+    },
+    {
+      "from": "anticheat_state",
+      "to": "ui_render",
+      "label": "全服广播",
+      "classification": "UI呈现",
+      "variant": "security",
+      "route": "straight"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "位姿流：定率与死区",
+      "items": [
+        "50ms (20Hz) 采样周期避免逐帧发包引发网络拥塞",
+        "位移 0.1 米、旋转 5 度死区过滤消除微动与静止包",
+        "远端采用 SmoothMove 差值逼近，实现 60FPS 丝滑表现"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "战斗流：权威防作弊",
+      "items": [
+        "本地碰撞作为不可信触发源，仅向服务端申报事件",
+        "服务端根据 (攻击者_目标_位置) 进行 1.0 秒去重",
+        "结算后全服下发 PLAYER_DAMAGE_RECEIVED 保持状态一致"
+      ]
+    }
+  ]
+}

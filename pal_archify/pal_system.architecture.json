@@ -1,0 +1,360 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "PAL 幻兽联机系统总体架构图",
+    "locale": "zh-CN",
+    "output": "pal_system.architecture.html",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1360,
+      660
+    ],
+    "views": [
+      {
+        "id": "client-gameplay",
+        "label": "客户端核心玩法",
+        "focus": [
+          "unity_player",
+          "pal_catch",
+          "companion_ai"
+        ],
+        "note": "本地玩家输入控制、物理刚体驱动、帕鲁球投掷捕获与伴宠AI。"
+      },
+      {
+        "id": "network-pipeline",
+        "label": "客户端与服务端通信",
+        "focus": [
+          "client_net",
+          "server_listener",
+          "msg_router"
+        ],
+        "note": "TCP 8888 端口管道定界符协议与双端多线程网络管道。"
+      },
+      {
+        "id": "authoritative-combat",
+        "label": "服务端权威战斗防作弊",
+        "focus": [
+          "msg_router",
+          "combat_adjudicator",
+          "session_registry",
+          "state_broadcaster"
+        ],
+        "note": "服务端集中结算伤害、1秒重复攻击防作弊与生命周期状态。"
+      },
+      {
+        "id": "remote-sync",
+        "label": "远端镜像平滑同步",
+        "focus": [
+          "state_broadcaster",
+          "server_listener",
+          "client_net",
+          "remote_proxy"
+        ],
+        "note": "广播下发给各客户端，由 OtherPlayerManager 插值渲染。"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "unity_player",
+      "type": "frontend",
+      "label": "本地玩家控制",
+      "sublabel": "Player & Rigidbody",
+      "pos": [
+        60,
+        100
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "tag": "物理驱动"
+    },
+    {
+      "id": "pal_catch",
+      "type": "frontend",
+      "label": "幻兽捕获系统",
+      "sublabel": "ThrowBall & Pokeball",
+      "pos": [
+        60,
+        250
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "tag": "摇摆捕获"
+    },
+    {
+      "id": "companion_ai",
+      "type": "frontend",
+      "label": "野生与伙伴AI",
+      "sublabel": "Enemy & Member",
+      "pos": [
+        60,
+        400
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "tag": "NavMesh AI"
+    },
+    {
+      "id": "client_net",
+      "type": "backend",
+      "label": "网络通信管理器",
+      "sublabel": "NetworkManager",
+      "pos": [
+        330,
+        180
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "tag": "多线程消息队列"
+    },
+    {
+      "id": "remote_proxy",
+      "type": "frontend",
+      "label": "远端玩家代理",
+      "sublabel": "OtherPlayerManager",
+      "pos": [
+        330,
+        340
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "tag": "平滑插值渲染"
+    },
+    {
+      "id": "server_listener",
+      "type": "cloud",
+      "label": "网络接入监听器",
+      "sublabel": "TcpListener :8888",
+      "pos": [
+        600,
+        180
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "tag": "并发连接池"
+    },
+    {
+      "id": "session_registry",
+      "type": "database",
+      "label": "客户端会话仓储",
+      "sublabel": "ClientInfo Dictionary",
+      "pos": [
+        870,
+        70
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "tag": "线程安全锁"
+    },
+    {
+      "id": "msg_router",
+      "type": "backend",
+      "label": "指令路由器",
+      "sublabel": "ProcessMessage",
+      "pos": [
+        870,
+        180
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "tag": "协议分发"
+    },
+    {
+      "id": "combat_adjudicator",
+      "type": "security",
+      "label": "权威战斗裁决器",
+      "sublabel": "HandlePlayerHit",
+      "pos": [
+        1140,
+        180
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "tag": "1秒去重防作弊"
+    },
+    {
+      "id": "state_broadcaster",
+      "type": "messagebus",
+      "label": "状态广播引擎",
+      "sublabel": "Broadcast Engine",
+      "pos": [
+        870,
+        340
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "tag": "全服广播分发"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Unity 客户端 (Local Client Host)",
+      "wraps": [
+        "unity_player",
+        "pal_catch",
+        "companion_ai",
+        "client_net",
+        "remote_proxy"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "PalGameServer 服务端 (Host Process)",
+      "wraps": [
+        "server_listener",
+        "session_registry",
+        "msg_router",
+        "combat_adjudicator",
+        "state_broadcaster"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "player-to-net",
+      "from": "unity_player",
+      "to": "client_net",
+      "label": "20Hz位姿同步",
+      "variant": "default"
+    },
+    {
+      "id": "catch-to-ai",
+      "from": "pal_catch",
+      "to": "companion_ai",
+      "label": "收服生成伴宠",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "net-to-proxy",
+      "from": "client_net",
+      "to": "remote_proxy",
+      "label": "主线程分发",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "net-to-server",
+      "from": "client_net",
+      "to": "server_listener",
+      "label": "TCP 字节流",
+      "variant": "emphasis"
+    },
+    {
+      "id": "listener-to-router",
+      "from": "server_listener",
+      "to": "msg_router",
+      "label": "解析命令",
+      "variant": "default"
+    },
+    {
+      "id": "router-to-session",
+      "from": "msg_router",
+      "to": "session_registry",
+      "label": "更新状态",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "router-to-combat",
+      "from": "msg_router",
+      "to": "combat_adjudicator",
+      "label": "击中判定",
+      "variant": "security"
+    },
+    {
+      "id": "combat-to-session",
+      "from": "combat_adjudicator",
+      "to": "session_registry",
+      "label": "扣除血量",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "right"
+    },
+    {
+      "id": "combat-to-broadcast",
+      "from": "combat_adjudicator",
+      "to": "state_broadcaster",
+      "label": "广播受击与死亡",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "right"
+    },
+    {
+      "id": "router-to-broadcast",
+      "from": "msg_router",
+      "to": "state_broadcaster",
+      "label": "移动动作转发",
+      "variant": "default",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "broadcast-to-listener",
+      "from": "state_broadcaster",
+      "to": "server_listener",
+      "label": "回写网络流",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "客户端双核驱动",
+      "items": [
+        "本地角色基于 Rigidbody 物理与第三人称相机驱动",
+        "帕鲁球通过协程摇晃判定与野生 AI 交互捕获",
+        "OtherPlayerManager 管理远端镜像的平滑插值"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "网络通信契约",
+      "items": [
+        "基于 .NET 8 原生 TcpListener，采用 UTF-8 管道定界符协议",
+        "客户端 20Hz 阈值 (0.1m/5°) 差异同步削减网络开销",
+        "独立接收线程 + 主线程 Queue 解耦网络 IO 与渲染"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "服务端权威与防作弊",
+      "items": [
+        "全服血量与存活状态 (ClientInfo) 完全由服务端裁决",
+        "基于攻击者-目标-位置复合键的 1 秒去重防连发外挂",
+        "死亡与伤害全服原子广播 (PLAYER_DAMAGE_RECEIVED)"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,294 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "PAL 联机客户端与服务端网络交互时序图",
+    "locale": "zh-CN",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "column_fit": "spread",
+    "output": "pal_network.sequence.html",
+    "viewBox": [
+      1080,
+      800
+    ],
+    "views": [
+      {
+        "id": "join-phase",
+        "label": "连接握手与世界发现",
+        "focus": [
+          "client_a",
+          "net_a",
+          "server",
+          "net_b",
+          "client_b"
+        ],
+        "note": "TCP 连接建立、欢迎包响应、新玩家加入与远端镜像实例生成。"
+      },
+      {
+        "id": "movement-phase",
+        "label": "20Hz 高频位姿同步",
+        "focus": [
+          "client_a",
+          "net_a",
+          "server",
+          "net_b",
+          "client_b"
+        ],
+        "note": "阈值过滤触发 PLAYER_UPDATE，服务端中继并由远端平滑插值。"
+      },
+      {
+        "id": "combat-phase",
+        "label": "权威伤害判定与广播",
+        "focus": [
+          "client_a",
+          "net_a",
+          "server",
+          "anti_cheat",
+          "net_b",
+          "client_b"
+        ],
+        "note": "客户端上报击中，服务端校验防刷并原子广播受击与血量。"
+      }
+    ]
+  },
+  "participants": [
+    {
+      "id": "client_a",
+      "type": "frontend",
+      "label": "本地玩家 A",
+      "sublabel": "Player A"
+    },
+    {
+      "id": "net_a",
+      "type": "backend",
+      "label": "本地网络层",
+      "sublabel": "NetworkManager"
+    },
+    {
+      "id": "server",
+      "type": "backend",
+      "label": "游戏主服务",
+      "sublabel": "PalGameServer"
+    },
+    {
+      "id": "anti_cheat",
+      "type": "security",
+      "label": "权威防作弊",
+      "sublabel": "CombatAdjudicator"
+    },
+    {
+      "id": "net_b",
+      "type": "backend",
+      "label": "远端网络层",
+      "sublabel": "NetworkManager"
+    },
+    {
+      "id": "client_b",
+      "type": "frontend",
+      "label": "远端玩家 B",
+      "sublabel": "Player B"
+    }
+  ],
+  "segments": [
+    {
+      "from": 140,
+      "to": 340,
+      "label": "连接握手与加入 (Connection & Join)"
+    },
+    {
+      "from": 355,
+      "to": 485,
+      "label": "位姿与动作同步 (Movement & 20Hz Sync)"
+    },
+    {
+      "from": 500,
+      "to": 720,
+      "label": "战斗判定与死亡结算 (Combat & Damage)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "client_a",
+      "to": "net_a",
+      "y": 170,
+      "label": "发起连接 ConnectToServer()",
+      "variant": "default"
+    },
+    {
+      "id": "m2",
+      "from": "net_a",
+      "to": "server",
+      "y": 205,
+      "label": "TCP 握手建立字节流",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m3",
+      "from": "server",
+      "to": "net_a",
+      "y": 240,
+      "label": "WELCOME|id|连接成功",
+      "variant": "return"
+    },
+    {
+      "id": "m4",
+      "from": "net_a",
+      "to": "server",
+      "y": 275,
+      "label": "PLAYER_JOIN|id|x,y,z",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m5",
+      "from": "server",
+      "to": "net_b",
+      "y": 308,
+      "label": "PLAYER_JOIN 广播给其他玩家",
+      "variant": "default"
+    },
+    {
+      "id": "m6",
+      "from": "net_b",
+      "to": "client_b",
+      "y": 338,
+      "label": "创建玩家A镜像代理",
+      "variant": "return"
+    },
+    {
+      "id": "m7",
+      "from": "client_a",
+      "to": "net_a",
+      "y": 375,
+      "label": "位移>0.1m 或旋转>5°",
+      "variant": "default"
+    },
+    {
+      "id": "m8",
+      "from": "net_a",
+      "to": "server",
+      "y": 410,
+      "label": "PLAYER_UPDATE|pos|rot|MOVE",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m9",
+      "from": "server",
+      "to": "net_b",
+      "y": 442,
+      "label": "PLAYER_UPDATE 广播转发",
+      "variant": "default"
+    },
+    {
+      "id": "m10",
+      "from": "net_b",
+      "to": "client_b",
+      "y": 472,
+      "label": "SmoothMove 平滑插值",
+      "variant": "return"
+    },
+    {
+      "id": "m11",
+      "from": "client_a",
+      "to": "net_a",
+      "y": 520,
+      "label": "子弹命中玩家B (Bullet Trigger)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m12",
+      "from": "net_a",
+      "to": "server",
+      "y": 555,
+      "label": "PLAYER_HIT|A|B|dmg|pos",
+      "variant": "security"
+    },
+    {
+      "id": "m13",
+      "from": "server",
+      "to": "anti_cheat",
+      "y": 588,
+      "label": "1.0s去重检测 & 伤害校验",
+      "variant": "security"
+    },
+    {
+      "id": "m14",
+      "from": "anti_cheat",
+      "to": "server",
+      "y": 618,
+      "label": "扣除血量 & 判定存活",
+      "variant": "return"
+    },
+    {
+      "id": "m15",
+      "from": "server",
+      "to": "net_b",
+      "y": 650,
+      "label": "PLAYER_DAMAGE_RECEIVED|B|dmg|hp",
+      "variant": "security"
+    },
+    {
+      "id": "m16",
+      "from": "server",
+      "to": "net_a",
+      "y": 678,
+      "label": "PLAYER_DAMAGE_RECEIVED 全服广播",
+      "variant": "security"
+    },
+    {
+      "id": "m17",
+      "from": "net_b",
+      "to": "client_b",
+      "y": 708,
+      "label": "扣除头顶血条 / 播放受击音效",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "net_a",
+      "from": 200,
+      "to": 710,
+      "type": "backend"
+    },
+    {
+      "participant": "server",
+      "from": 200,
+      "to": 710,
+      "type": "backend"
+    },
+    {
+      "participant": "anti_cheat",
+      "from": 585,
+      "to": 625,
+      "type": "security"
+    },
+    {
+      "participant": "net_b",
+      "from": 300,
+      "to": 710,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "主通道交互",
+      "items": [
+        "客户端启动后单例 NetworkManager 维系长连接",
+        "双向行读取器 (StreamReader) 驱动命令收发",
+        "生命周期与网络断开通过 PLAYER_LEAVE 广播注销"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "权威状态结算",
+      "items": [
+        "客户端仅上报物理触发事件，无权修改自身或他人血量",
+        "服务端作为唯一权威更新 ClientInfo.Health",
+        "广播下发保证所有客户端视图最终一致"
+      ]
+    }
+  ]
+}

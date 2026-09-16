@@ -1,0 +1,103 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "HoYo Quest Voice 对话识别与配音工作流",
+    "locale": "zh-CN",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "output": "dialogue-voice.workflow.html",
+    "views": [
+      {
+        "id": "main-voice-flow",
+        "label": "端到端配音主流程",
+        "focus": ["game_render", "win32_grab", "diff_gate", "ocr_crop", "speaker_match", "tts_synthesize", "audio_play"],
+        "note": "从游戏画面渲染出对话气泡，经截屏、指纹稳定触发、OCR识别、说话人匹配、GPT-SoVITS合成到声音播报的全流程。"
+      },
+      {
+        "id": "gating-branches",
+        "label": "打字机等待与非对话过滤",
+        "focus": ["diff_gate", "typewriter_wait", "scene_drop"],
+        "note": "帧差指纹门控识别打字机渐进过程（CHANGING）与非对话界面（UNSUPPORTED），避免过早或无效 OCR。"
+      },
+      {
+        "id": "caching-and-playback",
+        "label": "缓存命中与异步播放",
+        "focus": ["speaker_match", "cache_skip", "tts_synthesize", "audio_play"],
+        "note": "通过对话文本规范化哈希键实现同句音频秒级复用，异步 Winsound 播放保证主轮询无阻塞。"
+      }
+    ]
+  },
+  "lanes": [
+    { "id": "game_lane", "label": "游戏渲染与捕获层" },
+    { "id": "gating_lane", "label": "场景门控与过滤层", "variant": "exception" },
+    { "id": "ocr_lane", "label": "OCR 提取与路由层" },
+    { "id": "tts_lane", "label": "TTS 引擎与播放层" }
+  ],
+  "phases": [
+    { "id": "capture_phase", "label": "画面采集阶段", "fromCol": 0, "toCol": 1 },
+    { "id": "analysis_phase", "label": "门控与识别阶段", "fromCol": 2, "toCol": 4, "variant": "emphasis" },
+    { "id": "delivery_phase", "label": "合成与播放阶段", "fromCol": 5, "toCol": 5, "variant": "dashed" }
+  ],
+  "mainPath": [
+    "game_render",
+    "win32_grab",
+    "diff_gate",
+    "ocr_crop",
+    "speaker_match",
+    "tts_synthesize",
+    "audio_play"
+  ],
+  "nodes": [
+    { "id": "game_render", "lane": "game_lane", "col": 0, "type": "external", "label": "崩铁游戏渲染", "sublabel": "支线对话气泡出现", "width": 132 },
+    { "id": "win32_grab", "lane": "game_lane", "col": 1, "type": "cloud", "label": "Win32 窗口截屏", "sublabel": "PrintWindow 抓取原图", "width": 132 },
+    { "id": "typewriter_wait", "lane": "game_lane", "col": 2, "type": "security", "label": "打字机等待", "sublabel": "文字变动中暂缓", "width": 132 },
+    { "id": "diff_gate", "lane": "gating_lane", "col": 2, "type": "security", "label": "帧差指纹门控", "sublabel": "8x32 灰度特征降维", "tag": "相似度比对", "width": 132 },
+    { "id": "scene_drop", "lane": "gating_lane", "col": 3, "type": "security", "label": "非对话短路", "sublabel": "无需语音直接跳过", "width": 132 },
+    { "id": "ocr_crop", "lane": "ocr_lane", "col": 3, "type": "backend", "label": "RapidOCR 识别", "sublabel": "区域裁切与文本提取", "tag": "STABLE_NEW", "width": 132 },
+    { "id": "cache_skip", "lane": "tts_lane", "col": 4, "type": "database", "label": "同句缓存复用", "sublabel": "哈希命中跳过合成", "width": 132 },
+    { "id": "speaker_match", "lane": "ocr_lane", "col": 4, "type": "backend", "label": "六级说话人路由", "sublabel": "主角/旁白/别名/纠错", "tag": "声线绑定", "width": 132 },
+    { "id": "tts_synthesize", "lane": "tts_lane", "col": 5, "type": "cloud", "label": "GPT-SoVITS 合成", "sublabel": "动态切权重 + POST /tts", "tag": "生成音频", "width": 132 },
+    { "id": "audio_play", "lane": "game_lane", "col": 5, "type": "external", "label": "Winsound 播报", "sublabel": "SND_ASYNC 扬声器输出", "width": 132 }
+  ],
+  "edges": [
+    { "id": "edge-render-grab", "from": "game_render", "to": "win32_grab", "variant": "default" },
+    { "id": "edge-grab-gate", "from": "win32_grab", "to": "diff_gate", "label": "采样指纹", "variant": "emphasis" },
+    { "id": "edge-gate-wait", "from": "diff_gate", "to": "typewriter_wait", "label": "CHANGING", "variant": "security", "role": "branch" },
+    { "id": "edge-gate-drop", "from": "diff_gate", "to": "scene_drop", "label": "非对话", "variant": "security", "role": "branch" },
+    { "id": "edge-gate-ocr", "from": "diff_gate", "to": "ocr_crop", "label": "稳定触发", "variant": "emphasis" },
+    { "id": "edge-ocr-match", "from": "ocr_crop", "to": "speaker_match", "label": "提取文本", "variant": "default" },
+    { "id": "edge-match-cache", "from": "speaker_match", "to": "cache_skip", "label": "命中缓存", "variant": "dashed", "role": "branch" },
+    { "id": "edge-match-tts", "from": "speaker_match", "to": "tts_synthesize", "label": "下发合成", "variant": "emphasis" },
+    { "id": "edge-tts-play", "from": "tts_synthesize", "to": "audio_play", "label": "WAV 字节", "variant": "emphasis" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "帧差门控阶段",
+      "items": [
+        "针对游戏中逐字浮现的打字机特效，帧差门控比对滑动窗口指纹",
+        "在文字变动中（CHANGING）自动保持观察，直至文字完全稳定（STABLE_NEW）",
+        "彻底解决截取半句话或重复 OCR 造成的资源浪费与语音碎片"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "智能路由与合成",
+      "items": [
+        "RapidOCR 提取结果进入 SpeakerRouter 六级路由匹配机制",
+        "即使 OCR 识别个别错别字，也可通过别名表与纠错规则精准匹配模型",
+        "VoiceSwitchingGptSovitsTts 智能比对当前已载入模型，跳过冗余切权耗时"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "容错与短路保护",
+      "items": [
+        "遇到主菜单、背包、战斗等非对话场景，DialogueSceneGate 快速判定短路",
+        "针对连续重复轮询到的相同对白，Dispatcher 执行哈希去重跳过重复合成",
+        "进程离线或推理异常时记录错误日志，不中断主循环持续轮询恢复"
+      ]
+    }
+  ]
+}

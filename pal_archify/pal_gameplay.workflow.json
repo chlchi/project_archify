@@ -1,0 +1,291 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "PAL 幻兽捕获与联机战斗业务流程图",
+    "locale": "zh-CN",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "output": "pal_gameplay.workflow.html",
+    "views": [
+      {
+        "id": "capture-flow",
+        "label": "幻兽捕获完整链路",
+        "focus": [
+          "aim_input",
+          "throw_ball",
+          "pal_hit",
+          "pal_shake",
+          "catch_success",
+          "summon_member"
+        ],
+        "note": "从瞄准、投球、物理碰撞到摇摆概率结算及入队出战。"
+      },
+      {
+        "id": "combat-flow",
+        "label": "多人战斗与权威判定",
+        "focus": [
+          "player_fire",
+          "net_hit_send",
+          "server_check",
+          "server_broadcast"
+        ],
+        "note": "玩家射击碰撞触发 PLAYER_HIT，服务端防作弊与全服广播。"
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "player_lane",
+      "label": "本地玩家控制与输入"
+    },
+    {
+      "id": "gameplay_lane",
+      "label": "幻兽捕捉与伙伴AI"
+    },
+    {
+      "id": "network_lane",
+      "label": "客户端网络同步层"
+    },
+    {
+      "id": "server_lane",
+      "label": "服务端权威裁决与广播"
+    }
+  ],
+  "phases": [
+    {
+      "id": "phase1",
+      "label": "瞄准与投掷",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "phase2",
+      "label": "捕获与伴宠召唤",
+      "fromCol": 2,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "phase3",
+      "label": "联机战斗与伤害结算",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "groups": [
+    {
+      "id": "aim_group",
+      "label": "投掷阶段",
+      "lane": "player_lane",
+      "fromCol": 0,
+      "toCol": 1
+    },
+    {
+      "id": "pal_group",
+      "label": "捕获结算",
+      "lane": "gameplay_lane",
+      "fromCol": 1,
+      "toCol": 3,
+      "variant": "emphasis"
+    },
+    {
+      "id": "combat_group",
+      "label": "网络伤害结算",
+      "lane": "server_lane",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "security"
+    }
+  ],
+  "mainPath": [
+    "aim_input",
+    "throw_ball",
+    "pal_hit",
+    "pal_shake",
+    "catch_success",
+    "summon_member",
+    "player_fire",
+    "net_hit_send",
+    "server_check",
+    "server_broadcast"
+  ],
+  "nodes": [
+    {
+      "id": "aim_input",
+      "lane": "player_lane",
+      "col": 0,
+      "type": "frontend",
+      "label": "右键瞄准目标",
+      "sublabel": "地面射线检测",
+      "width": 132
+    },
+    {
+      "id": "throw_ball",
+      "lane": "player_lane",
+      "col": 1,
+      "type": "frontend",
+      "label": "释放投出精灵球",
+      "sublabel": "物理抛物线初速",
+      "width": 132
+    },
+    {
+      "id": "pal_hit",
+      "lane": "gameplay_lane",
+      "col": 1,
+      "type": "backend",
+      "label": "球体命中野生怪",
+      "sublabel": "OnPalBallHit 触发",
+      "width": 132
+    },
+    {
+      "id": "pal_shake",
+      "lane": "gameplay_lane",
+      "col": 2,
+      "type": "backend",
+      "label": "球体3次摇摆",
+      "sublabel": "CoDoCatching 概率",
+      "width": 132
+    },
+    {
+      "id": "catch_success",
+      "lane": "gameplay_lane",
+      "col": 3,
+      "type": "database",
+      "label": "成功收服幻兽",
+      "sublabel": "GameMode.pets 入队",
+      "width": 132
+    },
+    {
+      "id": "summon_member",
+      "lane": "gameplay_lane",
+      "col": 4,
+      "type": "frontend",
+      "label": "召唤伴宠出战",
+      "sublabel": "Member 协助战斗",
+      "width": 132
+    },
+    {
+      "id": "player_fire",
+      "lane": "player_lane",
+      "col": 4,
+      "type": "frontend",
+      "label": "玩家武器射击",
+      "sublabel": "子弹命中远端目标",
+      "width": 132
+    },
+    {
+      "id": "net_hit_send",
+      "lane": "network_lane",
+      "col": 4,
+      "type": "messagebus",
+      "label": "发送击中封包",
+      "sublabel": "PLAYER_HIT 消息",
+      "width": 132
+    },
+    {
+      "id": "server_check",
+      "lane": "server_lane",
+      "col": 5,
+      "type": "security",
+      "label": "服务端去重校验",
+      "sublabel": "1.0s 防连发作弊",
+      "tag": "防作弊",
+      "width": 132
+    },
+    {
+      "id": "server_broadcast",
+      "lane": "network_lane",
+      "col": 5,
+      "type": "backend",
+      "label": "广播伤害与阵亡",
+      "sublabel": "全服同步血量状态",
+      "width": 132
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "aim_input",
+      "to": "throw_ball",
+      "variant": "default"
+    },
+    {
+      "id": "e2",
+      "from": "throw_ball",
+      "to": "pal_hit",
+      "label": "碰撞检测",
+      "variant": "default"
+    },
+    {
+      "id": "e3",
+      "from": "pal_hit",
+      "to": "pal_shake",
+      "label": "进入捕捉",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e4",
+      "from": "pal_shake",
+      "to": "catch_success",
+      "label": "判定成功",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e5",
+      "from": "catch_success",
+      "to": "summon_member",
+      "label": "出战召唤",
+      "variant": "default"
+    },
+    {
+      "id": "e6",
+      "from": "summon_member",
+      "to": "player_fire",
+      "label": "协同攻击",
+      "variant": "dashed"
+    },
+    {
+      "id": "e7",
+      "from": "player_fire",
+      "to": "net_hit_send",
+      "label": "触发受击",
+      "variant": "emphasis"
+    },
+    {
+      "id": "e8",
+      "from": "net_hit_send",
+      "to": "server_check",
+      "label": "TCP 传输",
+      "variant": "security"
+    },
+    {
+      "id": "e9",
+      "from": "server_check",
+      "to": "server_broadcast",
+      "label": "扣血广播",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "捕获机制核心",
+      "items": [
+        "ThrowBall 基于相机射线计算仰角与水平朝向",
+        "Pokeball 击中后使目标刚体休眠，进入协程摇晃",
+        "捕获成功后伴宠加入 GameMode 并在场景中实例化"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "权威战斗防作弊",
+      "items": [
+        "Bullet 碰撞仅在本地检测并上报 PLAYER_HIT",
+        "服务端根据 (攻击者_目标_位置) 复合键记录时间戳",
+        "1 秒内同位置重复击中予以静默丢弃，有效防止连击外挂"
+      ]
+    }
+  ]
+}

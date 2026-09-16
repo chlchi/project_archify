@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "HoYo Quest Voice 帧差与任务状态生命周期",
+    "locale": "zh-CN",
+    "output": "dialogue-state.lifecycle.html",
+    "viewBox": [980, 660],
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "main-lifecycle",
+        "label": "主状态演进通路",
+        "focus": ["bootstrap", "changing", "stable_new", "synthesizing", "playing_done"],
+        "note": "指纹建立、打字机变化、文字稳定触发、模型切权合成至最终播报完成的主轨道。"
+      },
+      {
+        "id": "waiting-and-dedup",
+        "label": "静止帧与缓存复用",
+        "focus": ["stable_new", "unchanged", "synthesizing", "cached_hit"],
+        "note": "画面静止时跳过重复 OCR，同句文本命中缓存时跳过重复合成。"
+      },
+      {
+        "id": "recovery-and-terminal",
+        "label": "重试恢复与终态退出",
+        "focus": ["stable_new", "tts_retry", "scene_drop", "stale_expired"],
+        "note": "区分可恢复的模型推理超时与非对话场景、快进丢弃等终态退出分支。"
+      }
+    ]
+  },
+  "lanes": [
+    { "id": "main", "label": "主阶段演进 (Main Rail)" },
+    { "id": "waiting", "label": "等待与门控 (Gating & Cache)" },
+    { "id": "exceptions", "label": "重试与恢复 (Recovery Loop)" },
+    { "id": "terminal", "label": "终态退出 (Terminal Exits)" }
+  ],
+  "states": [
+    { "id": "bootstrap", "type": "start", "label": "BOOTSTRAP", "sublabel": "初始帧特征采集", "lane": "main", "col": 0, "step": "01", "tag": "基准建立" },
+    { "id": "changing", "type": "active", "label": "CHANGING", "sublabel": "打字机渐进变动中", "lane": "main", "col": 1, "step": "02", "tag": "暂缓推理" },
+    { "id": "stable_new", "type": "active", "label": "STABLE_NEW", "sublabel": "文字稳定触发识别", "lane": "main", "col": 2, "step": "03", "tag": "触发 OCR" },
+    { "id": "synthesizing", "type": "decision", "label": "SYNTHESIZING", "sublabel": "切权并请求 TTS", "lane": "main", "col": 3, "step": "04", "tag": "模型推理" },
+    { "id": "playing_done", "type": "success", "label": "PLAYING_DONE", "sublabel": "异步播报完成", "lane": "main", "col": 4, "step": "05", "tag": "任务结束" },
+    { "id": "unchanged", "type": "waiting", "label": "UNCHANGED", "sublabel": "画面静止跳过", "lane": "waiting", "col": 0, "tag": "免计算" },
+    { "id": "cached_hit", "type": "waiting", "label": "CACHED_HIT", "sublabel": "同句音频复用", "lane": "waiting", "col": 1, "tag": "秒级出声" },
+    { "id": "tts_retry", "type": "failure", "label": "TTS_RETRY", "sublabel": "连接超时可重试", "lane": "exceptions", "col": 0, "yOffset": 78, "tag": "可自愈" },
+    { "id": "scene_drop", "type": "failure", "label": "SCENE_DROP", "sublabel": "非对话场景退出", "lane": "terminal", "col": 0, "tag": "短路跳出" },
+    { "id": "stale_expired", "type": "failure", "label": "STALE_EXPIRED", "sublabel": "对话跳过丢弃", "lane": "terminal", "col": 1, "tag": "终态淘汰" }
+  ],
+  "transitions": [
+    { "id": "gate-unchanged", "from": "stable_new", "to": "unchanged", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "straight" },
+    { "id": "cache-dedup", "from": "synthesizing", "to": "cached_hit", "variant": "default", "route": "drop" },
+    { "id": "gate-failed", "from": "stable_new", "to": "tts_retry", "variant": "security", "fromSide": "left", "toSide": "left", "via": [[320, 157], [320, 385]] },
+    { "id": "retry-stable", "from": "tts_retry", "to": "stable_new", "variant": "emphasis", "fromSide": "left", "toSide": "top", "via": [[20, 385], [20, 80], [402, 80]] },
+    { "id": "cached-expired", "from": "cached_hit", "to": "stale_expired", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "straight" },
+    { "id": "scene-exit", "from": "unchanged", "to": "scene_drop", "variant": "security", "fromSide": "bottom", "toSide": "top", "via": [[480, 336], [480, 432], [402, 432]] }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "帧差检测主轨道",
+      "items": [
+        "BOOTSTRAP 初始化滑动窗口基准指纹",
+        "CHANGING 期间文字仍在动态浮现，保持低开销观测避免截断半句",
+        "STABLE_NEW 判定指纹在设定窗口内保持恒定，唤起 OCR 与后续调度"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "等待与缓存分支",
+      "items": [
+        "UNCHANGED 状态下持续跳过 OCR，显著减少 GPU/CPU 占用",
+        "CACHED_HIT 针对相邻轮询同句对白，直接读取历史生成的 WAV 音频",
+        "等待状态均属于非终态，画面更新后即刻平滑过渡至主轨道"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "容错重试与终态退出",
+      "items": [
+        "TTS_RETRY 在服务网络抖动时支持安全自愈重试，保证主循环不崩溃",
+        "SCENE_DROP 在玩家打开背包/菜单时直接短路，不污染事件流",
+        "STALE_EXPIRED 针对玩家连续快进点击时的陈旧对话音频执行超时丢弃"
+      ]
+    }
+  ]
+}

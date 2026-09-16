@@ -1,0 +1,243 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "PAL 联机玩家与幻兽实体生命周期状态机",
+    "locale": "zh-CN",
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "viewBox": [
+      980,
+      680
+    ],
+    "output": "pal_lifecycle.lifecycle.html",
+    "views": [
+      {
+        "id": "online-rail",
+        "label": "联机漫游主轨",
+        "focus": [
+          "offline",
+          "connecting",
+          "in_world",
+          "in_combat",
+          "victory_alive"
+        ],
+        "note": "从离线、握手、入场漫游、交火对抗到健康存活的有序主轨道。"
+      },
+      {
+        "id": "combat-death",
+        "label": "战斗伤害与阵亡终态",
+        "focus": [
+          "in_world",
+          "under_hit",
+          "player_died"
+        ],
+        "note": "受到攻击经由防作弊去重校验，血量归零触发 PLAYER_DIED 死亡终态。"
+      },
+      {
+        "id": "catch-outcome",
+        "label": "帕鲁收服与伴宠出战",
+        "focus": [
+          "in_combat",
+          "catching_shake",
+          "pet_mastered"
+        ],
+        "note": "战斗中投球触发球体摇晃判定，捕获成功后实例化 Member 协同作战。"
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "联机漫游主轨阶段"
+    },
+    {
+      "id": "combat",
+      "label": "受击与登出等待"
+    },
+    {
+      "id": "companion",
+      "label": "帕鲁捕获结算"
+    },
+    {
+      "id": "terminal",
+      "label": "生命周期终态"
+    }
+  ],
+  "states": [
+    {
+      "id": "offline",
+      "type": "start",
+      "label": "离线未连接",
+      "sublabel": "客户端启动就绪",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "tag": "初始化"
+    },
+    {
+      "id": "connecting",
+      "type": "active",
+      "label": "TCP 握手连接",
+      "sublabel": "TcpClient.Connect",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "tag": "端口:8888"
+    },
+    {
+      "id": "in_world",
+      "type": "decision",
+      "label": "入场漫游探索",
+      "sublabel": "PLAYER_JOIN 广播",
+      "lane": "main",
+      "col": 2,
+      "step": "03",
+      "tag": "存活在线"
+    },
+    {
+      "id": "in_combat",
+      "type": "active",
+      "label": "交战与投球捕获",
+      "sublabel": "射击/瞄准抛物线",
+      "lane": "main",
+      "col": 3,
+      "step": "04",
+      "tag": "战斗中"
+    },
+    {
+      "id": "victory_alive",
+      "type": "success",
+      "label": "持久存活在线",
+      "sublabel": "双向 20Hz 稳定同步",
+      "lane": "main",
+      "col": 4,
+      "step": "05",
+      "tag": "健康存活"
+    },
+    {
+      "id": "under_hit",
+      "type": "waiting",
+      "label": "受击去重裁决",
+      "sublabel": "1.0s 防作弊过滤",
+      "lane": "combat",
+      "col": 0,
+      "tag": "校验中"
+    },
+    {
+      "id": "catching_shake",
+      "type": "waiting",
+      "label": "精灵球3次晃动",
+      "sublabel": "CoDoCatching 概率",
+      "lane": "companion",
+      "col": 1,
+      "tag": "摇摆中"
+    },
+    {
+      "id": "voluntary_quit",
+      "type": "waiting",
+      "label": "主动断开连接",
+      "sublabel": "PLAYER_LEAVE 消息",
+      "lane": "combat",
+      "col": 2,
+      "tag": "退出中"
+    },
+    {
+      "id": "player_died",
+      "type": "failure",
+      "label": "生命归零阵亡",
+      "sublabel": "广播 PLAYER_DIED",
+      "lane": "terminal",
+      "col": 0,
+      "tag": "死亡终态"
+    },
+    {
+      "id": "pet_mastered",
+      "type": "success",
+      "label": "收服伴宠加入背包",
+      "sublabel": "生成 Member 协战",
+      "lane": "terminal",
+      "col": 1,
+      "tag": "收服终态"
+    },
+    {
+      "id": "session_closed",
+      "type": "failure",
+      "label": "连接彻底关闭",
+      "sublabel": "服务端清理 ClientInfo",
+      "lane": "terminal",
+      "col": 2,
+      "tag": "注销终态"
+    }
+  ],
+  "transitions": [
+    {
+      "from": "in_world",
+      "to": "under_hit",
+      "variant": "security",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "under_hit",
+      "to": "player_died",
+      "variant": "security",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "in_combat",
+      "to": "catching_shake",
+      "variant": "emphasis",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "catching_shake",
+      "to": "pet_mastered",
+      "variant": "emphasis",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "victory_alive",
+      "to": "voluntary_quit",
+      "variant": "dashed",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "from": "voluntary_quit",
+      "to": "session_closed",
+      "variant": "dashed",
+      "route": "straight",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "主轨道状态流转",
+      "items": [
+        "客户端启动后经历握手、进入场景、自由漫游到高频同步",
+        "网络断开或客户端退出将触发 PLAYER_LEAVE 注销",
+        "主轨体现正常游戏会话的标准生命周期"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "权威状态机与终态收敛",
+      "items": [
+        "受击状态依赖服务端复合键防刷（1 秒窗口去重）",
+        "Health <= 0 触发全局唯一的死亡判定，防作弊防误死",
+        "精灵球捕获状态由客户端协程控制晃动，成功后转为伙伴实体"
+      ]
+    }
+  ]
+}

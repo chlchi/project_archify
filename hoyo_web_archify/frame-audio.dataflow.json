@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "HoYo Quest Voice 画面到语音数据流向图",
+    "locale": "zh-CN",
+    "output": "frame-audio.dataflow.html",
+    "viewBox": [1080, 760],
+    "animation": "trace",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "pixel-to-features",
+        "label": "像素采样与特征分流",
+        "focus": ["game_screen", "raw_frame", "fingerprint_fp", "dialogue_roi"],
+        "note": "从显存像素缓冲区捕获原生 RGB 帧，分别派发生成轻量指纹与对话区域裁切。"
+      },
+      {
+        "id": "extraction-and-routing",
+        "label": "文本识别与声线路由",
+        "focus": ["fingerprint_fp", "dialogue_roi", "speaker_route", "dialogue_text"],
+        "note": "指纹门控发出通行信号，RapidOCR 提取结构化文本，SpeakerRouter 绑定对应模型权重。"
+      },
+      {
+        "id": "synthesis-and-delivery",
+        "label": "语音合成与终端消费",
+        "focus": ["speaker_route", "dialogue_text", "audio_output", "telemetry_hub"],
+        "note": "结合声线与文本在 GPT-SoVITS 完成合成，下发扬声器播放并向 Web 控制台发送遥测。"
+      }
+    ]
+  },
+  "stages": [
+    { "label": "画面源 (Source)" },
+    { "label": "原生捕获 (Capture)" },
+    { "label": "特征预处理 (Preprocess)" },
+    { "label": "识别与路由 (Extract)" },
+    { "label": "合成与消费 (Consume)" }
+  ],
+  "nodes": [
+    { "id": "game_screen", "type": "external", "label": "游戏渲染缓冲区", "sublabel": "HWND 像素源", "stage": 0, "row": 1, "tag": "2K 渲染" },
+    { "id": "raw_frame", "type": "cloud", "label": "原生 RGB 图像帧", "sublabel": "numpy.ndarray", "stage": 1, "row": 1, "tag": "uint8 RGB" },
+    { "id": "fingerprint_fp", "type": "security", "label": "降维灰度指纹", "sublabel": "8x32 灰度特征矩阵", "stage": 2, "row": 0, "tag": "~1ms 门控" },
+    { "id": "dialogue_roi", "type": "backend", "label": "对话区域裁切帧", "sublabel": "说话人+正文 BBox", "stage": 2, "row": 2, "tag": "ROI 提取" },
+    { "id": "speaker_route", "type": "backend", "label": "六级声线路由", "sublabel": "canonical_id + 权重", "stage": 3, "row": 0, "tag": "模型映射" },
+    { "id": "dialogue_text", "type": "backend", "label": "结构化文本事件", "sublabel": "TextEvent 正文数据", "stage": 3, "row": 2, "tag": "RapidOCR" },
+    { "id": "audio_output", "type": "cloud", "label": "GPT-SoVITS 播音", "sublabel": "POST /tts + Winsound", "stage": 4, "row": 1, "tag": "实时出声" },
+    { "id": "telemetry_hub", "type": "messagebus", "label": "Web 遥测控制台", "sublabel": "WebSocket / REST", "stage": 4, "row": 3, "tag": "SPA 仪表盘" }
+  ],
+  "flows": [
+    { "id": "flow-screen-raw", "from": "game_screen", "to": "raw_frame", "label": "Win32 抓帧", "classification": "像素矩阵", "variant": "default", "route": "straight", "labelAt": [207, 255] },
+    { "id": "flow-raw-fp", "from": "raw_frame", "to": "fingerprint_fp", "label": "灰度降采样", "classification": "特征指纹", "variant": "security", "fromSide": "right", "toSide": "left", "via": [[422, 271], [422, 157]], "labelAt": [438, 205] },
+    { "id": "flow-raw-roi", "from": "raw_frame", "to": "dialogue_roi", "label": "ROI 区域裁切", "classification": "截取图像", "variant": "default", "fromSide": "right", "toSide": "left", "via": [[422, 271], [422, 385]], "labelAt": [438, 335] },
+    { "id": "flow-fp-route", "from": "fingerprint_fp", "to": "speaker_route", "label": "稳定通行信号", "classification": "状态控制", "variant": "security", "route": "straight", "labelAt": [638, 142] },
+    { "id": "flow-roi-text", "from": "dialogue_roi", "to": "dialogue_text", "label": "ONNX 文字识别", "classification": "字符串流", "variant": "emphasis", "route": "straight", "labelAt": [638, 370] },
+    { "id": "flow-route-audio", "from": "speaker_route", "to": "audio_output", "label": "绑定声线预设", "classification": "模型参数", "variant": "default", "fromSide": "right", "toSide": "top", "via": [[878, 157], [878, 212], [960, 212]], "labelAt": [880, 198] },
+    { "id": "flow-text-audio", "from": "dialogue_text", "to": "audio_output", "label": "正文分句送入", "classification": "TTS 请求", "variant": "emphasis", "fromSide": "right", "toSide": "left", "via": [[852, 385], [852, 271]], "labelAt": [830, 326] },
+    { "id": "flow-audio-telemetry", "from": "audio_output", "to": "telemetry_hub", "label": "播报耗时与状态", "classification": "JSON 遥测", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "route": "straight", "labelAt": [960, 385] }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "数据降维流水线",
+      "items": [
+        "2560x1440 原生像素帧降采样至 8x32 灰度缩略图，将海量像素计算缩减数千倍",
+        "仅对通过门控校验的局部对白框区域执行双线性插值与 RapidOCR 提取",
+        "TextEvent 统一封装说话人名与多行合并文本，形成不可变数据载荷"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "声线与权重绑定",
+      "items": [
+        "SpeakerRouter 将 OCR 原始字符通过纠错字典映射为规范化 canonical_id",
+        "VoiceSwitchingGptSovitsTts 携带对应角色的参考音频、提示词与模型路径",
+        "POST /tts 发送规整后的文本 payload，流式生成高质量无杂音的 WAV 数据"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "消费与遥测链路",
+      "items": [
+        "音频由 Winsound 异步播放，播放结束发布 COMPLETED 事件",
+        "数据流同时注入 DialogueEventStore，供前端按需拉取历史对话记录",
+        "SPA 控制台通过 WebSocket 实时接收遥测，展现 TPS、延迟与检测成功率"
+      ]
+    }
+  ]
+}

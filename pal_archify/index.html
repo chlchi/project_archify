@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PAL 幻兽联机项目全景架构中枢 (Archify)</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card-bg: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text-bright: #f0f6fc;
+      --accent: #58a6ff;
+      --accent-purple: #bc8cff;
+      --accent-green: #3fb950;
+      --accent-orange: #d29922;
+      --accent-red: #f85149;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 32px 24px;
+    }
+    .container { max-width: 1280px; margin: 0 auto; }
+    header {
+      margin-bottom: 36px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 24px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 20px;
+      background: rgba(88, 166, 255, 0.15);
+      color: var(--accent);
+      margin-bottom: 12px;
+      border: 1px solid rgba(88, 166, 255, 0.3);
+    }
+    h1 {
+      font-size: 28px;
+      color: var(--text-bright);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .desc { font-size: 15px; color: #8b949e; max-width: 900px; }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover {
+      border-color: var(--accent);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.3);
+    }
+    .card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .card.arch::before { background: linear-gradient(90deg, #58a6ff, #1f6feb); }
+    .card.workflow::before { background: linear-gradient(90deg, #3fb950, #238636); }
+    .card.sequence::before { background: linear-gradient(90deg, #bc8cff, #8957e5); }
+    .card.dataflow::before { background: linear-gradient(90deg, #d29922, #9e6a03); }
+    .card.lifecycle::before { background: linear-gradient(90deg, #f85149, #da3633); }
+
+    .card-type {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .card.arch .card-type { color: var(--accent); }
+    .card.workflow .card-type { color: var(--accent-green); }
+    .card.sequence .card-type { color: var(--accent-purple); }
+    .card.dataflow .card-type { color: var(--accent-orange); }
+    .card.lifecycle .card-type { color: var(--accent-red); }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-bright);
+      margin-bottom: 10px;
+    }
+    .card-desc {
+      font-size: 13.5px;
+      color: #8b949e;
+      margin-bottom: 16px;
+      flex-grow: 1;
+    }
+    .card-features {
+      list-style: none;
+      margin-bottom: 20px;
+      font-size: 12.5px;
+    }
+    .card-features li {
+      margin-bottom: 6px;
+      color: #7d8590;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .card-features li::before {
+      content: "•";
+      color: var(--accent);
+    }
+    .card-footer {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: #238636;
+      color: #ffffff;
+      border: 1px solid rgba(240, 246, 252, 0.1);
+    }
+    .btn-primary:hover { background: #2ea043; }
+    .btn-secondary {
+      background: #21262d;
+      color: #c9d1d9;
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: #30363d; color: #fff; }
+
+    .preview-section {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 30px;
+    }
+    .preview-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0d1117;
+    }
+    .preview-tabs {
+      display: flex;
+      gap: 8px;
+    }
+    .tab-btn {
+      background: #21262d;
+      border: 1px solid var(--border);
+      color: #c9d1d9;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #0d1117;
+      font-weight: 600;
+      border-color: var(--accent);
+    }
+    .preview-frame {
+      width: 100%;
+      height: 720px;
+      border: none;
+      display: block;
+      background: #0d1117;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">Google DeepMind Antigravity × Archify v2.16</div>
+      <h1>PAL 幻兽联机系统全景架构中枢</h1>
+      <p class="desc">
+        本项目包含 Unity 3D 客户端 (<code>D:\Coding\Game\pal</code>) 与基于 .NET 8 构建的独立游戏服务端 (<code>PalGameServer</code>)。
+        已通过 <strong>Archify</strong> 渲染引擎生成 5 大架构视图体系，所有图表均支持<strong>深浅色切换、节点搜索、路径高亮、动态追踪 (Trace Animation)、章节视角切换与 SVG/PNG/Share Card 导出</strong>。
+      </p>
+    </header>
+
+    <div class="grid">
+      <!-- 1. Architecture -->
+      <div class="card arch">
+        <div>
+          <div class="card-type">01 · Architecture</div>
+          <h2 class="card-title">系统总体架构图</h2>
+          <p class="card-desc">展示客户端各子系统（输入物理、精灵球捕获、NavMesh AI、NetworkManager、OtherPlayerManager）与服务端（TcpListener、路由分发、权威战斗防作弊、会话仓储）的整体模块边界与网络拓扑。</p>
+          <ul class="card-features">
+            <li>包含 Client Host 与 Server Host 双信任域边界</li>
+            <li>标注 20Hz 增量位姿同步与权威击中判定</li>
+            <li>内置 4 套视角：玩法、网络管道、防作弊与镜像同步</li>
+          </ul>
+        </div>
+        <div class="card-footer">
+          <a class="btn btn-primary" href="pal_system.architecture.html" target="_blank">打开独立交互图 ↗</a>
+          <button class="btn btn-secondary" onclick="loadPreview('pal_system.architecture.html')">在下方预览</button>
+        </div>
+      </div>
+
+      <!-- 2. Workflow -->
+      <div class="card workflow">
+        <div>
+          <div class="card-type">02 · Workflow</div>
+          <h2 class="card-title">捕获与战斗业务流程图</h2>
+          <p class="card-desc">基于 Schema v2 泳道模型呈现：右键射线瞄准 → 抛物线投掷精灵球 → 碰撞野生怪 → 3次摇摆概率判定 → 伴宠收服入队 → R键召唤协同作战 → 联机子弹命中 → 服务端 1 秒防刷校验与全服广播。</p>
+          <ul class="card-features">
+            <li>清晰划分玩家控制、幻兽AI、网络层与服务端泳道</li>
+            <li>三阶段：瞄准投掷、捕获召唤、联机战斗结算</li>
+            <li>涵盖正向收服链路与战斗伤害防作弊验证</li>
+          </ul>
+        </div>
+        <div class="card-footer">
+          <a class="btn btn-primary" href="pal_gameplay.workflow.html" target="_blank">打开独立交互图 ↗</a>
+          <button class="btn btn-secondary" onclick="loadPreview('pal_gameplay.workflow.html')">在下方预览</button>
+        </div>
+      </div>
+
+      <!-- 3. Sequence -->
+      <div class="card sequence">
+        <div>
+          <div class="card-type">03 · Sequence</div>
+          <h2 class="card-title">网络交互时序图</h2>
+          <p class="card-desc">呈现玩家 A、本地 NetworkManager、PalGameServer、权威防作弊器、远端 NetworkManager 与玩家 B 之间的全链路消息时序。</p>
+          <ul class="card-features">
+            <li>覆盖连接握手 (WELCOME)、新玩家发现 (PLAYER_JOIN)</li>
+            <li>20Hz 阈值位姿中继与远端 SmoothMove 插值时序</li>
+            <li>PLAYER_HIT 上报、服务端去重防刷与原子广播结算</li>
+          </ul>
+        </div>
+        <div class="card-footer">
+          <a class="btn btn-primary" href="pal_network.sequence.html" target="_blank">打开独立交互图 ↗</a>
+          <button class="btn btn-secondary" onclick="loadPreview('pal_network.sequence.html')">在下方预览</button>
+        </div>
+      </div>
+
+      <!-- 4. Dataflow -->
+      <div class="card dataflow">
+        <div>
+          <div class="card-type">04 · Dataflow</div>
+          <h2 class="card-title">状态同步与网络数据流图</h2>
+          <p class="card-desc">5 阶段流式数据通道：输入物理采样 → 差异过滤与 20Hz 定率 → 管道协议编码 → 服务端权威状态裁决 → 远端镜像平滑插值呈现。</p>
+          <ul class="card-features">
+            <li>双管道流：位姿移动同步流 + 战斗伤害结算流</li>
+            <li>50ms 采样周期与 0.1m/5° 空间死区防网络风暴</li>
+            <li>服务端 (攻击者_目标_位置) 复合键 1.0s 防连击外挂</li>
+          </ul>
+        </div>
+        <div class="card-footer">
+          <a class="btn btn-primary" href="pal_sync.dataflow.html" target="_blank">打开独立交互图 ↗</a>
+          <button class="btn btn-secondary" onclick="loadPreview('pal_sync.dataflow.html')">在下方预览</button>
+        </div>
+      </div>
+
+      <!-- 5. Lifecycle -->
+      <div class="card lifecycle">
+        <div>
+          <div class="card-type">05 · Lifecycle</div>
+          <h2 class="card-title">玩家与幻兽生命周期状态机</h2>
+          <p class="card-desc">严格遵循 Archify 状态机轨道布局：联机漫游主轨道（离线 → 握手 → 漫游 → 战斗 → 存活），受击与退出分支，以及伴宠收服与生命终态收敛。</p>
+          <ul class="card-features">
+            <li>主轨展现正常游戏会话的标准 5 阶段流转</li>
+            <li>受击状态经由防作弊校验，血量归零触发死亡终态</li>
+            <li>精灵球 3 次摇摆判定收敛为收服入队与伴宠出战</li>
+          </ul>
+        </div>
+        <div class="card-footer">
+          <a class="btn btn-primary" href="pal_lifecycle.lifecycle.html" target="_blank">打开独立交互图 ↗</a>
+          <button class="btn btn-secondary" onclick="loadPreview('pal_lifecycle.lifecycle.html')">在下方预览</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Preview Sandbox -->
+    <div class="preview-section">
+      <div class="preview-header">
+        <h3 style="font-size: 16px; color: var(--text-bright);">内嵌实时交互预览沙盒</h3>
+        <div class="preview-tabs">
+          <button class="tab-btn active" onclick="switchTab(this, 'pal_system.architecture.html')">系统总体架构</button>
+          <button class="tab-btn" onclick="switchTab(this, 'pal_gameplay.workflow.html')">业务流程</button>
+          <button class="tab-btn" onclick="switchTab(this, 'pal_network.sequence.html')">网络时序</button>
+          <button class="tab-btn" onclick="switchTab(this, 'pal_sync.dataflow.html')">数据流</button>
+          <button class="tab-btn" onclick="switchTab(this, 'pal_lifecycle.lifecycle.html')">生命周期</button>
+        </div>
+      </div>
+      <iframe id="preview-frame" class="preview-frame" src="pal_system.architecture.html"></iframe>
+    </div>
+  </div>
+
+  <script>
+    function loadPreview(url) {
+      document.getElementById('preview-frame').src = url;
+      document.querySelector('.preview-section').scrollIntoView({ behavior: 'smooth' });
+      const btns = document.querySelectorAll('.tab-btn');
+      btns.forEach(btn => {
+        if (btn.getAttribute('onclick').includes(url)) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+    function switchTab(btn, url) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('preview-frame').src = url;
+    }
+  </script>
+</body>
+</html>

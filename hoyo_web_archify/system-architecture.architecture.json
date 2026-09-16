@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "HoYo Quest Voice 系统架构图",
+    "locale": "zh-CN",
+    "output": "system-architecture.architecture.html",
+    "quality_profile": "showcase",
+    "viewBox": [1120, 720],
+    "views": [
+      {
+        "id": "audio-generation-path",
+        "label": "对话识别与语音播报主通路",
+        "focus": ["hsr_game", "win32_capture", "ocr_engine", "speaker_router", "runtime_core", "gpt_sovits", "audio_playback"],
+        "note": "从崩铁游戏窗口截屏、OCR 提取、说话人路由到 GPT-SoVITS 语音合成与 Windows 本地播放的核心通路。"
+      },
+      {
+        "id": "frame-gating-path",
+        "label": "帧差门控与性能优化",
+        "focus": ["win32_capture", "change_gate", "ocr_engine", "runtime_core"],
+        "note": "通过 8x32 灰度指纹比对过滤打字机过渡态与静止帧，降低 80% 以上 CPU/OCR 浪费。"
+      },
+      {
+        "id": "web-observability",
+        "label": "Web 控制台与状态感知",
+        "focus": ["runtime_core", "event_pub", "backend_api", "bun_server", "spa_web"],
+        "note": "事件驱动的观测层，FastAPI 后台发布事件并通过 Bun 反向代理向 SPA 实时广播。"
+      }
+    ]
+  },
+  "components": [
+    { "id": "hsr_game", "type": "external", "label": "崩铁游戏窗口", "sublabel": "HWND (2K 2560x1440)", "pos": [40, 300], "size": [130, 60] },
+    { "id": "win32_capture", "type": "cloud", "label": "Win32 捕获层", "sublabel": "PrintWindow / BitBlt", "pos": [240, 300], "size": [140, 60], "tag": "DPI-Aware" },
+    { "id": "change_gate", "type": "security", "label": "帧差与场景门控", "sublabel": "8x32 灰度指纹比对", "pos": [460, 120], "size": [140, 64], "tag": "降本 80%+" },
+    { "id": "ocr_engine", "type": "backend", "label": "RapidOCR 识别管道", "sublabel": "ONNX Runtime 区域裁切", "pos": [460, 300], "size": [140, 60] },
+    { "id": "speaker_router", "type": "backend", "label": "说话人六级路由", "sublabel": "主角/旁白/别名/纠错", "pos": [460, 470], "size": [140, 60] },
+    { "id": "runtime_core", "type": "backend", "label": "HeadlessRuntime", "sublabel": "主轮询调度与去重", "pos": [690, 300], "size": [140, 60] },
+    { "id": "event_pub", "type": "messagebus", "label": "事件中心与存储", "sublabel": "RuntimeEventPublisher", "pos": [690, 120], "size": [140, 60] },
+    { "id": "gpt_sovits", "type": "cloud", "label": "GPT-SoVITS 引擎", "sublabel": "HTTP 服务 :9880", "pos": [690, 470], "size": [140, 60], "tag": "权重热切" },
+    { "id": "audio_playback", "type": "external", "label": "音频播放适配器", "sublabel": "Winsound (SND_ASYNC)", "pos": [690, 610], "size": [140, 60] },
+    { "id": "backend_api", "type": "backend", "label": "FastAPI 服务", "sublabel": "HTTP/WS :8000", "pos": [920, 120], "size": [140, 60] },
+    { "id": "bun_server", "type": "backend", "label": "Bun 网关", "sublabel": "HTTP 代理 :3000", "pos": [920, 260], "size": [140, 60] },
+    { "id": "spa_web", "type": "frontend", "label": "Web 控制台 SPA", "sublabel": "Tailwind + TS 仪表盘", "pos": [920, 400], "size": [140, 60] }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Python 后台核心运行时 (Layers 1-5)",
+      "wraps": ["win32_capture", "change_gate", "ocr_engine", "speaker_router", "runtime_core", "audio_playback", "event_pub"]
+    },
+    {
+      "kind": "security-group",
+      "label": "Web 控制台与客户端交互层 (Layer 6)",
+      "wraps": ["backend_api", "bun_server", "spa_web"]
+    }
+  ],
+  "connections": [
+    { "id": "game-capture", "from": "hsr_game", "to": "win32_capture", "label": "Win32 抓帧", "variant": "emphasis" },
+    { "id": "capture-gate", "from": "win32_capture", "to": "change_gate", "label": "指纹送检", "variant": "dashed", "fromSide": "top", "toSide": "left" },
+    { "id": "capture-ocr", "from": "win32_capture", "to": "ocr_engine", "label": "RGB 帧裁切" },
+    { "id": "gate-trigger", "from": "change_gate", "to": "ocr_engine", "label": "STABLE_NEW 触发", "variant": "security", "fromSide": "bottom", "toSide": "top", "labelDy": 45 },
+    { "id": "ocr-router", "from": "ocr_engine", "to": "speaker_router", "label": "识别说话人", "fromSide": "bottom", "toSide": "top", "labelDy": 45 },
+    { "id": "ocr-runtime", "from": "ocr_engine", "to": "runtime_core", "label": "对话正文" },
+    { "id": "router-runtime", "from": "speaker_router", "to": "runtime_core", "label": "规范角色", "fromSide": "right", "toSide": "left" },
+    { "id": "runtime-events", "from": "runtime_core", "to": "event_pub", "label": "生命周期事件", "variant": "dashed", "fromSide": "top", "toSide": "bottom", "labelDy": -45 },
+    { "id": "events-api", "from": "event_pub", "to": "backend_api", "label": "事件广播" },
+    { "id": "runtime-tts", "from": "runtime_core", "to": "gpt_sovits", "label": "POST /tts", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelDy": 45 },
+    { "id": "tts-playback", "from": "gpt_sovits", "to": "audio_playback", "label": "WAV 字节流", "fromSide": "bottom", "toSide": "top", "labelDy": 35 },
+    { "id": "api-bun", "from": "backend_api", "to": "bun_server", "label": "反向代理", "fromSide": "bottom", "toSide": "top", "labelDy": 35 },
+    { "id": "bun-spa", "from": "bun_server", "to": "spa_web", "label": "静态服务/WS", "fromSide": "bottom", "toSide": "top", "labelDy": 35 }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "捕获与智能门控",
+      "items": [
+        "PrintWindow 与 BitBlt 策略双重保障 DPI-aware 原生分辨率截屏",
+        "8x32 灰度指纹门控识别打字机渐进过程，等待文字稳定后再触发 OCR",
+        "大幅降低无效推理计算，减少 GPU/CPU 占用 80% 以上"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "调度与语音合成",
+      "items": [
+        "SpeakerRouter 提供六级优先级匹配，容忍 OCR 错别字与别名映射",
+        "VoiceSwitchingGptSovitsTts 智能复用与按需切换模型权重",
+        "Winsound 异步非阻塞播报，支持音频缓存排重"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "无侵入与 Web 监控",
+      "items": [
+        "全流程无需注入游戏或修改本地文件，纯视觉与音频层交互",
+        "FastAPI 后台线程隔离运行时逻辑，Bun 网关提供 SPA 极速访问",
+        "仪表盘实时监控检测次数、成功播报、耗时与模型切换状态"
+      ]
+    }
+  ]
+}
